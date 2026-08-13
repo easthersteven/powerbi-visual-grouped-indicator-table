@@ -1,0 +1,76 @@
+.gi-table-root {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: #252423;
+    // Crispness under page scaling (Fit to page / high-DPI): grayscale smoothing on both engines
+    // + geometricPrecision so glyph metrics stay floating-point and scale without snapping/blurring.
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: geometricPrecision;
+
+    table.gi-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        padding: 6px 9px;
+        text-align: left;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+        font-weight: 700;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 6px 8px;
+        border-bottom: 1px solid #E5E3E1;
+        vertical-align: middle;
+    }
+
+    tr.grp-first td {
+        border-top: 1px solid #C8C6C4;
+    }
+
+    td.merged {
+        vertical-align: middle;
+        font-weight: 600;
+        color: #023864;
+        background-clip: padding-box;
+    }
+    /* a single hairline where the detail block meets the merged block */
+    td.merged.num { font-weight: 700; }
+    td.grp-key {
+        font-weight: 700;
+    }
+    td.num {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    tbody tr {
+        cursor: pointer;
+        transition: background 0.1s, opacity 0.1s;
+    }
+    tbody tr:hover td {
+        background: #e9f3f1 !important;
+    }
+    tbody tr.sel td {
+        background: #dcefe9 !important;
+    }
+
+    .gi-pill {
+        font-family: "Courier New", monospace;
+        font-size: 9px;
+        padding: 1px 6px;
+        border-radius: 4px;
+        display: inline-block;
+        white-space: nowrap;
+    }
+}

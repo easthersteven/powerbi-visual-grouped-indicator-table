@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "allowJs": false,
+        "target": "es2022",
+        "module": "es2020",
+        "moduleResolution": "node",
+        "sourceMap": false,
+        "declaration": false,
+        "outDir": "./.tmp/test-build/",
+        "lib": [
+            "es2022",
+            "dom"
+        ]
+    },
+    "files": [
+        "./src/visual.ts",
+        "./src/logic.ts"
+    ]
+}
