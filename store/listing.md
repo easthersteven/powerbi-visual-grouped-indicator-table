@@ -35,9 +35,30 @@ Works well for KPI registers, programme scorecards, control and compliance regis
 - Screenshot 1366x768 (PNG, under 1024 kb): `store/screenshot-1366x768.png`
   Suggested caption: "Grouped rows with merged cells, colour coded deltas and clickable rows that filter the report."
 
-**Technical configuration:**
-- PBIVIZ package: `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.0.0.0.pbiviz`
-- Sample PBIX: required, must embed offline sample data and use this exact visual version.
+**Properties page:**
+- Category (max 2): Comparison + KPI
+- Industry (max 2): leave empty - the visual is not industry-specific
+- EULA: use the Standard Contract for Microsoft's commercial marketplace
+- Privacy policy link: https://github.com/easthersteven/powerbi-visual-grouped-indicator-table/blob/main/PRIVACY.md
+- Support document link: https://github.com/easthersteven/powerbi-visual-grouped-indicator-table/blob/main/SUPPORT.md
 
-**Certification (Offer setup page):** tick "Power BI certification" and in Notes for certification enter:
-Source: https://github.com/easthersteven/powerbi-visual-grouped-indicator-table (branch: certification). Public repository, no credentials required. Build and test instructions in README.
+**Technical configuration page:**
+- PBIVIZ package: `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.0.0.0.pbiviz`
+  (full path: `C:\Users\se518\powerbi-visuals\powerbi-visual-grouped-indicator-table\dist\groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.0.0.0.pbiviz`)
+- Sample PBIX: `store/grouped-indicator-table-sample.pbix` - must open offline with no external
+  connections, embed its own sample data, and use this exact visual version.
+
+**Certification:**
+1. Offer setup page: tick **Request Power BI certification**.
+2. Review and publish page, **Notes for certification** box, paste:
+
+   Source code: https://github.com/easthersteven/powerbi-visual-grouped-indicator-table
+   Branch: certification (matches the submitted package exactly)
+   Access: public repository, no credentials required.
+   Build: npm install, then npm run package (powerbi-visuals-tools 7.2.1, API 5.11.0).
+   Verified: npm audit clean, eslint clean, `pbiviz package --certification-audit`
+   reports no external requests, capabilities declare `"privileges": []`.
+
+**Pre-publish checks (24 Aug 2026, v1.0.0.0):** npm audit 0 vulnerabilities; eslint
+clean; unit tests pass; certification audit found no external requests; logo 300x300 and
+screenshot 1366x768 within size limits; main and certification branches identical.
