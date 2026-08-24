@@ -10,7 +10,7 @@
     "sourceQueryCulture": "en-GB",
     "tables": [
       {
-        "name": "Performance",
+        "name": "Delta",
         "columns": [
           {
             "name": "Metric",
@@ -95,29 +95,21 @@
           {
             "name": "Actual",
             "expression": "SUM('Performance'[ActualValue])",
-            "formatString": "#,0",
-            "annotations": []
+            "formatString": "#,0"
           },
           {
             "name": "Target",
             "expression": "SUM('Performance'[TargetValue])",
-            "formatString": "#,0",
-            "annotations": []
+            "formatString": "#,0"
           },
           {
             "name": "Delta",
-            "expression": "VAR d = SUM('Performance'[DeltaPct])\nRETURN IF ( d >= 0, \"▲ \" & FORMAT ( d, \"0.0%\" ), \"▼ \" & FORMAT ( ABS ( d ), \"0.0%\" ) )",
-            "annotations": [
-              {
-                "name": "PBI_FormatHint",
-                "value": "{\"isGeneralNumber\":true}"
-              }
-            ]
+            "expression": "VAR d = SUM('Performance'[DeltaPct])\nRETURN IF ( d >= 0, \"▲ \" & FORMAT ( d, \"0.0%\" ), \"▼ \" & FORMAT ( ABS ( d ), \"0.0%\" ) )"
           }
         ],
         "partitions": [
           {
-            "name": "Performance",
+            "name": "Delta",
             "mode": "import",
             "source": {
               "type": "m",
@@ -143,7 +135,7 @@
     "annotations": [
       {
         "name": "PBI_QueryOrder",
-        "value": "[\"Performance\"]"
+        "value": "[\"Delta\"]"
       },
       {
         "name": "__PBI_TimeIntelligenceEnabled",
