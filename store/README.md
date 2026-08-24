@@ -25,3 +25,8 @@ Tips page. Turn it into a .pbix once:
 
 Keep the .pbix in step with the visual version you upload: rebuild with
 `npm run package`, re-import the new .pbiviz, and save again.
+
+> **Regenerating the project:** close it in Power BI Desktop first. Regeneration replaces the
+> `definition/` folder wholesale, and Desktop holds its own copy in memory - if it saves over a
+> regenerated project you get a mix of old and new visuals, and the stale ones report
+> `Missing_References` against fields the model no longer has.
