@@ -10,7 +10,7 @@
     "sourceQueryCulture": "en-GB",
     "tables": [
       {
-        "name": "Delta",
+        "name": "Performance",
         "columns": [
           {
             "name": "Metric",
@@ -109,7 +109,7 @@
         ],
         "partitions": [
           {
-            "name": "Delta",
+            "name": "Performance",
             "mode": "import",
             "source": {
               "type": "m",
@@ -135,7 +135,7 @@
     "annotations": [
       {
         "name": "PBI_QueryOrder",
-        "value": "[\"Delta\"]"
+        "value": "[\"Performance\"]"
       },
       {
         "name": "__PBI_TimeIntelligenceEnabled",
