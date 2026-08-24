@@ -27,7 +27,8 @@ Works well for KPI registers, programme scorecards, control and compliance regis
 
 **Help link:** https://github.com/easthersteven/powerbi-visual-grouped-indicator-table#readme
 **Privacy policy link:** https://github.com/easthersteven/powerbi-visual-grouped-indicator-table/blob/main/PRIVACY.md
-**Support link:** https://github.com/easthersteven/powerbi-visual-grouped-indicator-table/issues
+**Support document link:** https://github.com/easthersteven/powerbi-visual-grouped-indicator-table/blob/main/SUPPORT.md
+**Support (issues) link:** https://github.com/easthersteven/powerbi-visual-grouped-indicator-table/issues
 
 **Media:**
 - Logo 300x300: `store/icon-300x300.png`
