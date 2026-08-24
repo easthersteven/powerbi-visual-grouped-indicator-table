@@ -1,0 +1,154 @@
+{
+  "compatibilityLevel": 1550,
+  "model": {
+    "culture": "en-GB",
+    "dataAccessOptions": {
+      "legacyRedirects": true,
+      "returnErrorValuesAsNull": true
+    },
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "sourceQueryCulture": "en-GB",
+    "tables": [
+      {
+        "name": "Performance",
+        "columns": [
+          {
+            "name": "Metric",
+            "dataType": "string",
+            "sourceColumn": "Metric",
+            "summarizeBy": "none",
+            "isHidden": false,
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "Region",
+            "dataType": "string",
+            "sourceColumn": "Region",
+            "summarizeBy": "none",
+            "isHidden": false,
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "GoodDirection",
+            "dataType": "string",
+            "sourceColumn": "GoodDirection",
+            "summarizeBy": "none",
+            "isHidden": false,
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "ActualValue",
+            "dataType": "double",
+            "sourceColumn": "ActualValue",
+            "summarizeBy": "none",
+            "isHidden": false,
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "TargetValue",
+            "dataType": "double",
+            "sourceColumn": "TargetValue",
+            "summarizeBy": "none",
+            "isHidden": false,
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "DeltaPct",
+            "dataType": "double",
+            "sourceColumn": "DeltaPct",
+            "summarizeBy": "none",
+            "isHidden": true,
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          }
+        ],
+        "measures": [
+          {
+            "name": "Actual",
+            "expression": "SUM('Performance'[ActualValue])",
+            "formatString": "#,0",
+            "annotations": []
+          },
+          {
+            "name": "Target",
+            "expression": "SUM('Performance'[TargetValue])",
+            "formatString": "#,0",
+            "annotations": []
+          },
+          {
+            "name": "Delta",
+            "expression": "VAR d = SUM('Performance'[DeltaPct])\nRETURN IF ( d >= 0, \"▲ \" & FORMAT ( d, \"0.0%\" ), \"▼ \" & FORMAT ( ABS ( d ), \"0.0%\" ) )",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Performance",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText(\"bZA9DoJAEIWvYrbSBMnszi4/vTUxUlgQKl1jYgJEQA/kTTyZOzDoijbzmu/NvDdFIXb2ZqveLpbPx2UlApHV1+7stG/ckCrRgwA4gRBiJcrg15TX/ceUxhF5wJBnTaa/nr1tu/cdjZIE+Y4EOXg29mQPXevFOtb3akjkhuIDesZOaZhV8cRCiGbGcgpGE1pteGs05s62+fwtmsJiwi9JPezrEYgT5tZJVB7nlzfURZuxuIlEWb4A\", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Metric = _t, Region = _t, GoodDirection = _t, ActualValue = _t, TargetValue = _t, DeltaPct = _t]),",
+                "    #\"Changed Type\" = Table.TransformColumnTypes(Source,{{\"Metric\", type text}, {\"Region\", type text}, {\"GoodDirection\", type text}, {\"ActualValue\", type number}, {\"TargetValue\", type number}, {\"DeltaPct\", type number}})",
+                "in",
+                "    #\"Changed Type\""
+              ]
+            }
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "annotations": [
+      {
+        "name": "PBI_QueryOrder",
+        "value": "[\"Performance\"]"
+      },
+      {
+        "name": "__PBI_TimeIntelligenceEnabled",
+        "value": "0"
+      }
+    ]
+  }
+}

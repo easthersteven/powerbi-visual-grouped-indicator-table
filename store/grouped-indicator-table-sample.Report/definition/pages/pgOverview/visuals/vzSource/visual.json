@@ -1,0 +1,51 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "vzSource",
+  "position": {
+    "x": 780,
+    "y": 24,
+    "z": 0,
+    "width": 460,
+    "height": 130,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Performance"
+                    }
+                  },
+                  "Property": "Metric"
+                }
+              },
+              "queryRef": "Performance.Metric",
+              "nativeQueryRef": "Metric"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Performance"
+                    }
+                  },
+                  "Property": "GoodDirection"
+                }
+              },
+              "queryRef": "Performance.GoodDirection",
+              "nativeQueryRef": "GoodDirection"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

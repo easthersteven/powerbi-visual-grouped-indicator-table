@@ -4,3 +4,8 @@ dist/
 .vscode/
 coverage/
 webpack.statistics*.html
+
+# Power BI Desktop project local state
+store/*.SemanticModel/.pbi/
+store/*.Report/.pbi/
+store/*.SemanticModel/cache.abf

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "Grouped Indicator Table sample"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "383c6514-e3ac-59df-9b91-a41f712858d2"
+  }
+}
