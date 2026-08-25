@@ -20,12 +20,18 @@ function makeHost(captured) {
             clear: () => { captured.cleared++; return Promise.resolve(); },
             select: (ids, multi) => { captured.selections.push({ count: ids.length, multi }); return Promise.resolve(); }
         }),
-        createSelectionIdBuilder: () => ({ withTable: () => ({ createSelectionId: () => ({}) }) })
+        createSelectionIdBuilder: () => ({ withTable: () => ({ createSelectionId: () => ({}) }) }),
+        tooltipService: {
+            show: (o) => { captured.tooltips.push(o); },
+            hide: () => { captured.tooltipHides++; }
+        },
+        colorPalette: captured.palette,
+        get hostCapabilities() { return captured.hostCapabilities; }
     };
 }
 
 function makeVisual() {
-    const captured = { events: [], selections: [], cleared: 0, contextMenus: 0 };
+    const captured = { events: [], selections: [], cleared: 0, contextMenus: 0, tooltips: [], tooltipHides: 0, palette: { isHighContrast: false, foreground: { value: '#ffffff' }, background: { value: '#000000' } } };
     const element = document.createElement("div");
     document.body.appendChild(element);
     const visual = new Visual({ host: makeHost(captured), element });
@@ -44,6 +50,19 @@ function update(visual, columns, rows, objects) {
 }
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
+
+// standard sample used by the certification test cases below
+function sampleColumns() {
+    return [
+        col("Code", "T.Code", { groupBy: true }),
+        col("Name", "T.Name", { dimensions: true }),
+        col("Now", "_Measures.Now", { values: true }, { isMeasure: true, format: "0%" }),
+        col("Change", "_Measures.Change", { values: true }, { isMeasure: true }),
+        col("Dir", "T.GoodDirection", { direction: true })
+    ];
+}
+const sampleRows = () => [["C1", "Alpha", 0.5, "▲ 2pp", "up"], ["C2", "Beta", 0.6, "▼ 1pp", "up"]];
+
 
 test("renders a header and one row per table row, direction column hidden", () => {
     const { visual, element, captured } = makeVisual();
@@ -173,4 +192,54 @@ test("right-click on a row opens the context menu", () => {
     update(visual, columns, [["C1", 5]]);
     element.querySelector("tbody tr").dispatchEvent(new dom.window.MouseEvent("contextmenu", { bubbles: true }));
     assert.equal(captured.contextMenus, 1);
+});
+
+// ---- certification policy 1180.2.2.x -------------------------------------------------
+
+test("scrolls rather than clipping when the host shrinks the visual (1180.2.2)", async () => {
+    const { readFileSync } = await import("node:fs");
+    const less = readFileSync(new URL("../style/visual.less", import.meta.url), "utf8");
+    assert.match(less.slice(0, 400), /overflow:\s*auto/, "the root container must scroll, not clip");
+});
+
+test("shows a row tooltip listing every displayed column (1180.2.2.2)", () => {
+    const { visual, element, captured } = makeVisual();
+    update(visual, sampleColumns(), sampleRows());
+    const row = element.querySelector("tbody tr");
+    row.dispatchEvent(new dom.window.MouseEvent("mousemove", { clientX: 4, clientY: 4, bubbles: true }));
+    assert.equal(captured.tooltips.length, 1);
+    assert.ok(captured.tooltips[0].dataItems.length > 0, "tooltip lists the row's columns");
+    row.dispatchEvent(new dom.window.MouseEvent("mouseleave", { bubbles: true }));
+    assert.ok(captured.tooltipHides > 0);
+});
+
+test("keyboard: rows are focusable and Enter selects the group (1180.2.2.3)", () => {
+    const { visual, element, captured } = makeVisual();
+    update(visual, sampleColumns(), sampleRows());
+    const row = element.querySelector("tbody tr");
+    assert.equal(row.tabIndex, 0);
+    row.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    assert.equal(captured.selections.length, 1);
+});
+
+test("respects Edit interactions being turned off", () => {
+    const { visual, element, captured } = makeVisual();
+    captured.hostCapabilities = { allowInteractions: false };
+    update(visual, sampleColumns(), sampleRows());
+    element.querySelector("tbody tr").dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true }));
+    assert.equal(captured.selections.length, 0);
+});
+
+test("high contrast: colours come from the host palette", () => {
+    const { visual, element, captured } = makeVisual();
+    captured.palette.isHighContrast = true;
+    update(visual, sampleColumns(), sampleRows());
+    assert.equal(element.querySelector("th").style.background, "rgb(0, 0, 0)");
+    assert.equal(element.querySelector("th").style.color, "rgb(255, 255, 255)");
+});
+
+test("landing page explains the visual when no fields are bound", () => {
+    const { visual, element } = makeVisual();
+    visual.update({ dataViews: [{ metadata: {}, table: { columns: [], rows: [] } }] });
+    assert.ok(element.querySelector(".gi-landing-title"));
 });

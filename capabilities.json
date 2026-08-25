@@ -32,6 +32,13 @@
     },
     "dataViewMappings": [
         {
+            "conditions": [
+                {
+                    "groupBy": { "max": 1 },
+                    "direction": { "max": 1 },
+                    "heatMode": { "max": 1 }
+                }
+            ],
             "table": {
                 "rows": {
                     "select": [
@@ -47,5 +54,11 @@
         }
     ],
     "supportsHighlight": true,
+    "tooltips": {
+        "supportedTypes": { "default": true, "canvas": true }
+    },
+    "supportsKeyboardFocus": true,
+    "supportsMultiVisualSelection": true,
+    "supportsLandingPage": true,
     "privileges": []
 }

@@ -10,6 +10,9 @@ import IVisual = powerbi.extensibility.visual.IVisual;
 import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 import IVisualEventService = powerbi.extensibility.IVisualEventService;
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
+import ITooltipService = powerbi.extensibility.ITooltipService;
+import ISandboxExtendedColorPalette = powerbi.extensibility.ISandboxExtendedColorPalette;
+import ILocalizationManager = powerbi.extensibility.ILocalizationManager;
 import DataView = powerbi.DataView;
 import DataViewTable = powerbi.DataViewTable;
 import PrimitiveValue = powerbi.PrimitiveValue;
@@ -41,6 +44,9 @@ export class Visual implements IVisual {
     private host: IVisualHost;
     private events: IVisualEventService;
     private selectionManager: ISelectionManager;
+    private tooltipService: ITooltipService;
+    private colorPalette: ISandboxExtendedColorPalette;
+    private localization: ILocalizationManager;
     private root: HTMLElement;
     private selectedKeys = new Set<string>();
     private accent = DEFAULTS.accent;
@@ -51,6 +57,9 @@ export class Visual implements IVisual {
         this.host = options.host;
         this.events = options.host.eventService;
         this.selectionManager = options.host.createSelectionManager();
+        this.tooltipService = options.host.tooltipService;
+        this.colorPalette = options.host.colorPalette as ISandboxExtendedColorPalette;
+        this.localization = options.host.createLocalizationManager?.();
         this.root = options.element;
         this.root.classList.add("gi-table-root");
         this.root.addEventListener("click", () => { this.selectionManager.clear(); this.selectedKeys.clear(); this.applySel(); });
@@ -58,6 +67,28 @@ export class Visual implements IVisual {
             this.selectionManager.showContextMenu({} as unknown as powerbi.visuals.ISelectionId, { x: ev.clientX, y: ev.clientY });
             ev.preventDefault();
         });
+    }
+
+    // Localized string with the English text as the fallback.
+    private text(key: string, fallback: string): string {
+        try {
+            return this.localization?.getDisplayName(key) || fallback;
+        } catch {
+            return fallback;
+        }
+    }
+
+    // Shown when no fields are bound yet, so an empty table explains itself.
+    private renderLandingPage(): void {
+        const page = el("div", "gi-landing");
+        const title = el("div", "gi-landing-title"); title.textContent = this.text("Landing_Title", "Grouped Indicator Table");
+        const body = el("div", "gi-landing-body");
+        body.textContent = this.text("Landing_Body",
+            "Bind a field to Group by (merged) for the row groups, one or more to Row columns for "
+            + "the detail, and your measures to Values. Delta direction colours the trailing delta "
+            + "columns by whether up or down is good.");
+        page.appendChild(title); page.appendChild(body);
+        this.root.appendChild(page);
     }
 
     public update(options: VisualUpdateOptions) {
@@ -69,7 +100,11 @@ export class Visual implements IVisual {
             while (this.root.firstChild) this.root.removeChild(this.root.firstChild);
             const dv: DataView = options.dataViews?.[0];
             const table: DataViewTable | undefined = dv?.table;
-            if (!table || !table.columns?.length || !table.rows?.length) { this.events.renderingFinished(options); return; }
+            if (!table || !table.columns?.length || !table.rows?.length) {
+                this.renderLandingPage();
+                this.events.renderingFinished(options);
+                return;
+            }
 
             const o = readObjects(dv);
             const s: Style = {
@@ -87,6 +122,18 @@ export class Visual implements IVisual {
                 heatmapMid: fill(o, "heatmapMid", DEFAULTS.heatmapMid),
                 heatmapHigh: fill(o, "heatmapHigh", DEFAULTS.heatmapHigh),
             };
+            // High contrast mode: take every colour from the host palette so the table stays
+            // legible under the user's accessibility theme, and drop the heatmap shading
+            // (a diverging scale carries no meaning in a two-colour theme).
+            if (this.colorPalette?.isHighContrast === true) {
+                const fore = this.colorPalette.foreground?.value;
+                const back = this.colorPalette.background?.value;
+                s.headerBg = back; s.headerColor = fore; s.rowAltBg = back; s.accent = fore;
+                s.pillColor = fore; s.pillBg = back;
+                s.good = fore; s.bad = fore; s.neutral = fore;
+                s.heatmap = false;
+            }
+
             this.accent = s.accent;
             this.lastFontSize = s.fontSize;
             this.lastC = { headerBg: s.headerBg, headerColor: s.headerColor, rowAltBg: s.rowAltBg, accent: s.accent, good: s.good, bad: s.bad, neutral: s.neutral };
@@ -218,9 +265,34 @@ export class Visual implements IVisual {
                         tr.appendChild(td);
                     }
 
-                    tr.addEventListener("click", (ev) => {
-                        ev.stopPropagation();
-                        const multi = ev.ctrlKey || ev.metaKey;
+                    // Keyboard access: rows are focusable and Enter or Space selects them.
+                    tr.tabIndex = 0;
+                    tr.setAttribute("role", "row");
+
+                    // Host tooltip: the whole row, column by column.
+                    tr.addEventListener("mousemove", (ev) => {
+                        const rect = this.root.getBoundingClientRect();
+                        this.tooltipService?.show({
+                            coordinates: [ev.clientX - rect.left, ev.clientY - rect.top],
+                            isTouchEvent: false,
+                            dataItems: display.map((c) => ({
+                                displayName: c.name || String(c.index),
+                                value: String(table.rows[ri][c.index] ?? ""),
+                            })),
+                            identities: groupIds.length ? [groupIds[0]] : [],
+                        });
+                    });
+                    tr.addEventListener("mouseleave", () => this.tooltipService?.hide({ immediately: true, isTouchEvent: false }));
+
+                    tr.addEventListener("keydown", (ev: KeyboardEvent) => {
+                        if (ev.key !== "Enter" && ev.key !== " ") return;
+                        ev.preventDefault();
+                        selectGroup(ev.ctrlKey || ev.metaKey);
+                    });
+
+                    const selectGroup = (multi: boolean) => {
+                        // Honour the report's Edit interactions setting.
+                        if (this.host.hostCapabilities?.allowInteractions === false) return;
                         const isOnly = !multi && this.selectedKeys.size === 1 && this.selectedKeys.has(gkey);
                         const after = () => {
                             if (multi) { this.selectedKeys.has(gkey) ? this.selectedKeys.delete(gkey) : this.selectedKeys.add(gkey); }
@@ -232,6 +304,11 @@ export class Visual implements IVisual {
                             if (isOnly) this.selectionManager.clear().then(after);
                             else this.selectionManager.select(groupIds, multi).then(after);
                         } catch { after(); }
+                    };
+
+                    tr.addEventListener("click", (ev) => {
+                        ev.stopPropagation();
+                        selectGroup(ev.ctrlKey || ev.metaKey);
                     });
                     tr.addEventListener("contextmenu", (ev) => {
                         ev.preventDefault();

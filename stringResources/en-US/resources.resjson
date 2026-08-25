@@ -1,0 +1,9 @@
+{
+    "groupBy": "Group by (merged)",
+    "dimensions": "Row columns",
+    "values": "Values (merged)",
+    "direction": "Delta direction (hidden)",
+    "heatMode": "Heatmap switch (optional)",
+    "Landing_Title": "Grouped Indicator Table",
+    "Landing_Body": "Bind a field to Group by (merged) for the row groups, one or more to Row columns for the detail, and your measures to Values. Delta direction colours the trailing delta columns by whether up or down is good."
+}
