@@ -52,3 +52,17 @@ in "Testing submissions of Power BI custom visuals".
 features it still lists are informational extras (Analytics Pane, Conditional Formatting,
 Drill Down, Fetch More Data, File Download, Launch URL, Local Storage, Modal Dialog, Warning
 Icon); several of those would require privileges that certification forbids.
+
+## Current state (26 August 2026)
+
+**Ready to submit:** 1.1.0.0. Package built and audited at
+`dist/` - upload that file on the Partner Center Technical configuration page, and paste the
+notes from `store/listing.md` into Notes for certification on Review and publish.
+
+**Outstanding before upload:** `store/` still holds a sample .pbix that embeds 1.0.0.0. Power BI
+requires the sample report to use the submitted visual version, so re-save it from the .pbip
+project with the 1.1.0.0 package first - see `store/README.md` for the steps.
+
+**Verified at this version:** npm audit 0 vulnerabilities; ESLint clean; 28 tests passing at
+97% statement coverage; `pbiviz package --certification-audit` reports no external requests
+and no recommended-feature warnings.
