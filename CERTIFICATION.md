@@ -20,6 +20,14 @@ The visual does not use the host tooltip service.
 Clicking a row cross-filters the page through `ISelectionManager`, with Ctrl+click for
 multi-select.
 
+### 1180.2.3 Sample File - risk cleared
+
+Pill Toggle Slicer failed this policy on 26 August 2026 because its `.pbiviz` and `.pbix`
+slots held different versions. The same mismatch existed here: the sample embedded 1.0.0.0
+while the package to submit is 1.1.0.0. `store/grouped-indicator-table-sample.pbix` now
+embeds 1.1.0.0, byte-identical to
+`dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.1.0.0.pbiviz`.
+
 ## Full policy audit (26 August 2026)
 
 Audited against the Microsoft certification policies (1180/1200) and the reviewer test list
@@ -46,6 +54,7 @@ in "Testing submissions of Power BI custom visuals".
 | Landing page when nothing is bound | **Fixed** - explains what to bind |
 | Localization | **Fixed** - `stringResources` and the host localization manager |
 | Bookmarks | Pass |
+| Sample .pbix embeds the submitted visual version (1180.2.3) | **Fixed** - sample embeds 1.1.0.0, byte-identical to `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.1.0.0.pbiviz` |
 | No external services; `privileges: []` | Pass - certification audit reports no external requests |
 
 `pbiviz package --certification-audit` reports **no recommended-feature warnings**. The
@@ -59,9 +68,12 @@ Icon); several of those would require privileges that certification forbids.
 `dist/` - upload that file on the Partner Center Technical configuration page, and paste the
 notes from `store/listing.md` into Notes for certification on Review and publish.
 
-**Outstanding before upload:** `store/` still holds a sample .pbix that embeds 1.0.0.0. Power BI
-requires the sample report to use the submitted visual version, so re-save it from the .pbip
-project with the 1.1.0.0 package first - see `store/README.md` for the steps.
+**Outstanding before upload:** none in the repo. `store/grouped-indicator-table-sample.pbix`
+embeds 1.1.0.0, matching the package in `dist/`. Upload both slots together - uploading
+one alone is what produced the 1180.2.3 failure on Pill Toggle Slicer. The sample was
+updated by replacing the embedded visual payload in place rather than by a Save As from
+Desktop, so open it once in Power BI Desktop to confirm the visual renders before
+uploading.
 
 **Verified at this version:** npm audit 0 vulnerabilities; ESLint clean; 28 tests passing at
 97% statement coverage; `pbiviz package --certification-audit` reports no external requests
