@@ -50,14 +50,59 @@ Works well for KPI registers, programme scorecards, control and compliance regis
 
 **Certification:**
 1. Offer setup page: tick **Request Power BI certification**.
-2. Review and publish page, **Notes for certification** box, paste:
+2. Review and publish page, **Notes for certification** box, paste everything
+   between the rules below (reviewer-facing only - nothing in it is a note to self):
 
-   Source code: https://github.com/easthersteven/powerbi-visual-grouped-indicator-table
-   Branch: certification (matches the submitted package exactly)
+   ---
+   Grouped Indicator Table 1.2.0.0
+   Supersedes 1.0.0.0, submitted 24 August 2026.
+
+   SOURCE AND BUILD
+   Repository: https://github.com/easthersteven/powerbi-visual-grouped-indicator-table
+   Branch: certification - byte-identical to main and to the submitted package.
    Access: public repository, no credentials required.
-   Build: npm install, then npm run package (powerbi-visuals-tools 7.2.1, API 5.11.0).
-   Verified: npm audit clean, eslint clean, `pbiviz package --certification-audit`
-   reports no external requests, capabilities declare `"privileges": []`.
+   Build: npm install, then npm run package.
+   Tooling: powerbi-visuals-tools 7.2.1, API 5.11.0.
+
+   WHAT THE VISUAL DOES
+   A table whose rows are collected into groups, with the shared group cell merged down
+   the left. Delta columns are coloured good, bad or neutral from the leading arrow
+   character and a per-group direction field, so a falling defect count reads green.
+   Clicking a row cross-filters the page by that group; Ctrl+click multi-selects and
+   clicking empty space clears. An optional heatmap shades numeric cells around a
+   configurable centre.
+
+   CHANGES IN THIS VERSION
+   Every property declared in capabilities.json is now returned from getFormattingModel,
+   so the whole configuration surface is reachable in the Format pane - previously the
+   code pill colours, heatmap and layout switches could only be set through a theme file.
+   Adds a font family picker, a header font size separate from the body size, and colours
+   for body text, value cells and group labels. Numeric settings are range-checked, so an
+   out-of-range value falls back to its default rather than rendering an unusable table.
+
+   HOST BEHAVIOUR AND ACCESSIBILITY
+   The root container is overflow:auto, so the table gains scroll bars rather than
+   clipping when the host shrinks it. Hovering a row shows it column by column through
+   the host tooltip service. High contrast mode takes every colour from the host palette
+   and drops the heatmap, which carries no meaning in a two-colour theme. Rows are
+   focusable and Enter or Space selects them; supportsKeyboardFocus is declared. Honours
+   the report's Edit interactions setting, reflects highlighting from other visuals
+   (supportsHighlight), and supports the Rendering Events API and context menus. Strings
+   are localised through stringResources and the host localization manager, and a landing
+   page explains the visual when nothing is bound.
+
+   SECURITY AND PRIVACY
+   No external services and no network calls of any kind; no data leaves the report.
+   capabilities.json declares "privileges": []. pbiviz package --certification-audit
+   reports no external requests. npm audit reports 0 vulnerabilities. 31 unit tests pass.
+
+   SAMPLE FILE
+   grouped-indicator-table-sample.pbix opens offline: the model is import-mode with
+   inline sample data, with no data sources, connectors or credentials. It embeds visual
+   version 1.2.0.0, matching the submitted .pbiviz. Page 1 shows the visual with a native
+   table over the same data on the same page, so cross-filtering from a row click is
+   visible. Page 2 documents the field bindings and settings.
+   ---
 
 **Pre-publish checks (27 Aug 2026, v1.2.0.0):** npm audit 0 vulnerabilities; eslint
 clean; unit tests pass; certification audit found no external requests; logo 300x300 and
