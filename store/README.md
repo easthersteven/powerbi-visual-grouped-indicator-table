@@ -18,7 +18,7 @@ Tips page. Turn it into a .pbix once:
    tick **Store reports using enhanced metadata format (PBIR)**. Restart Desktop.
 2. Open `store/grouped-indicator-table-sample.pbip`.
 3. **Insert > More visuals > Import a visual from a file** and pick
-   `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.1.0.0.pbiviz`. If the visual container is still
+   `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.2.0.0.pbiviz`. If the visual container is still
    blank, close and reopen the project - Desktop registers the visual on load.
 4. **Ctrl+S** to save the project (this writes the visual into the report definition).
 5. **File > Save as** > `store/grouped-indicator-table-sample.pbix`.

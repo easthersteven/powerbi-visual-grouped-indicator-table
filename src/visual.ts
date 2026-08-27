@@ -20,13 +20,17 @@ import PrimitiveValue = powerbi.PrimitiveValue;
 interface Style {
     headerBg: string; headerColor: string; rowAltBg: string; accent: string;
     pillColor: string; pillBg: string; good: string; bad: string; neutral: string;
-    fontSize: number; deltaColumnCount: number; hideEmptyColumns: boolean; sortByGroup: boolean;
+    fontFamily: string; fontSize: number; headerSize: number;
+    textColor: string; valueColor: string; groupColor: string;
+    deltaColumnCount: number; hideEmptyColumns: boolean; sortByGroup: boolean;
     heatmap: boolean; heatmapCenter: number; heatmapLow: string; heatmapMid: string; heatmapHigh: string;
 }
 const DEFAULTS: Style = {
     headerBg: "#023864", headerColor: "#FFFFFF", rowAltBg: "#f6faf9", accent: "#1F908C",
     pillColor: "#016C8D", pillBg: "#e7f1f4", good: "#0F7A2C", bad: "#9E2F24", neutral: "#605E5C",
-    fontSize: 12, deltaColumnCount: 1, hideEmptyColumns: false, sortByGroup: false,
+    fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 12, headerSize: 10,
+    textColor: "#252423", valueColor: "#023864", groupColor: "#023864",
+    deltaColumnCount: 1, hideEmptyColumns: false, sortByGroup: false,
     heatmap: false, heatmapCenter: 1, heatmapLow: "#2C7FB8", heatmapMid: "#FFFFFF", heatmapHigh: "#E8843C",
 };
 
@@ -37,6 +41,17 @@ function readObjects(dv: DataView): Record<string, unknown> | undefined {
 }
 function fill(o: Record<string, unknown> | undefined, k: string, d: string): string {
     return (o?.[k] as { solid?: { color?: string } })?.solid?.color || d;
+}
+// Numeric pane values are clamped: a hand-edited theme file can supply anything, and an
+// out-of-range size or column count would render an unusable table.
+function num(o: Record<string, unknown> | undefined, k: string, d: number, min: number, max: number): number {
+    const n = o?.[k];
+    if (typeof n !== "number" || !isFinite(n) || n < min || n > max) return d;
+    return n;
+}
+function text(o: Record<string, unknown> | undefined, k: string, d: string): string {
+    const t = o?.[k];
+    return typeof t === "string" && t !== "" ? t : d;
 }
 const hasAlpha = (v: PrimitiveValue | undefined) => /[A-Za-z]/.test(String(v ?? ""));
 
@@ -50,8 +65,9 @@ export class Visual implements IVisual {
     private root: HTMLElement;
     private selectedKeys = new Set<string>();
     private accent = DEFAULTS.accent;
-    private lastFontSize = DEFAULTS.fontSize;
-    private lastC = { headerBg: DEFAULTS.headerBg, headerColor: DEFAULTS.headerColor, rowAltBg: DEFAULTS.rowAltBg, accent: DEFAULTS.accent, good: DEFAULTS.good, bad: DEFAULTS.bad, neutral: DEFAULTS.neutral };
+    // Mirrors the last rendered settings so getFormattingModel shows what the table is
+    // actually displaying, including the defaults applied when a property is unset.
+    private lastS: Style = { ...DEFAULTS };
 
     constructor(options: VisualConstructorOptions) {
         this.host = options.host;
@@ -112,8 +128,13 @@ export class Visual implements IVisual {
                 rowAltBg: fill(o, "rowAltBg", DEFAULTS.rowAltBg), accent: fill(o, "accent", DEFAULTS.accent),
                 pillColor: fill(o, "pillColor", DEFAULTS.pillColor), pillBg: fill(o, "pillBg", DEFAULTS.pillBg),
                 good: fill(o, "good", DEFAULTS.good), bad: fill(o, "bad", DEFAULTS.bad), neutral: fill(o, "neutral", DEFAULTS.neutral),
-                fontSize: (o?.["fontSize"] as number) ?? DEFAULTS.fontSize,
-                deltaColumnCount: (o?.["deltaColumnCount"] as number) ?? DEFAULTS.deltaColumnCount,
+                fontFamily: text(o, "fontFamily", DEFAULTS.fontFamily),
+                fontSize: num(o, "fontSize", DEFAULTS.fontSize, 4, 200),
+                headerSize: num(o, "headerSize", DEFAULTS.headerSize, 4, 200),
+                textColor: fill(o, "textColor", DEFAULTS.textColor),
+                valueColor: fill(o, "valueColor", DEFAULTS.valueColor),
+                groupColor: fill(o, "groupColor", DEFAULTS.groupColor),
+                deltaColumnCount: num(o, "deltaColumnCount", DEFAULTS.deltaColumnCount, 0, 20),
                 hideEmptyColumns: (o?.["hideEmptyColumns"] as boolean) ?? DEFAULTS.hideEmptyColumns,
                 sortByGroup: (o?.["sortByGroup"] as boolean) ?? DEFAULTS.sortByGroup,
                 heatmap: (o?.["heatmap"] as boolean) ?? DEFAULTS.heatmap,
@@ -131,12 +152,15 @@ export class Visual implements IVisual {
                 s.headerBg = back; s.headerColor = fore; s.rowAltBg = back; s.accent = fore;
                 s.pillColor = fore; s.pillBg = back;
                 s.good = fore; s.bad = fore; s.neutral = fore;
+                s.textColor = fore; s.valueColor = fore; s.groupColor = fore;
                 s.heatmap = false;
             }
 
             this.accent = s.accent;
-            this.lastFontSize = s.fontSize;
-            this.lastC = { headerBg: s.headerBg, headerColor: s.headerColor, rowAltBg: s.rowAltBg, accent: s.accent, good: s.good, bad: s.bad, neutral: s.neutral };
+            this.lastS = s;
+            // Font family and body colour apply to the whole table so every cell inherits them.
+            this.root.style.fontFamily = s.fontFamily;
+            this.root.style.color = s.textColor;
 
             // ---- classify columns by data role (with query-name fallbacks) ----
             const qn = (c: powerbi.DataViewMetadataColumn) => String((c as { queryName?: string }).queryName ?? c.displayName ?? "");
@@ -216,6 +240,7 @@ export class Visual implements IVisual {
             const thead = el("thead"); const htr = el("tr");
             for (const c of display) {
                 const th = el("th"); th.textContent = c.name; th.style.background = s.headerBg; th.style.color = s.headerColor;
+                th.style.fontSize = s.headerSize + "px";
                 if (deltaSet.has(c.index) || (c.isVal && !textValSet.has(c.index))) th.style.textAlign = "right";
                 htr.appendChild(th);
             }
@@ -255,12 +280,12 @@ export class Visual implements IVisual {
                             if (n !== null) {
                                 const col = divergingColor(n, s.heatmapCenter, hmSpan, lo, mid, hi);
                                 td.style.background = col.bg; td.style.color = col.fg;
-                            } else { td.style.color = "#023864"; }
+                            } else { td.style.color = s.valueColor; }
                         } else if (c.index === pillIdx) {
                             const pill = el("span", "gi-pill"); pill.textContent = text; pill.style.color = s.pillColor; pill.style.background = s.pillBg; td.appendChild(pill);
                         } else if (c.isVal) {                                        // merged text value (e.g. name / source)
-                            td.style.color = "#023864"; td.textContent = text;
-                        } else if (c.isGroup) { td.classList.add("grp-key"); td.textContent = text; }
+                            td.style.color = s.valueColor; td.textContent = text;
+                        } else if (c.isGroup) { td.classList.add("grp-key"); td.style.color = s.groupColor; td.textContent = text; }
                         else td.textContent = text;
                         tr.appendChild(td);
                     }
@@ -336,37 +361,135 @@ export class Visual implements IVisual {
             if (firstTd) (firstTd as HTMLElement).style.boxShadow = sel ? `inset 3px 0 0 ${this.accent}` : "";
         });
     }
+    // --- Format pane -------------------------------------------------------
+    // Every property declared in capabilities.json is surfaced here. At API 5.x the pane is
+    // built solely from this model, so anything omitted is unreachable to the report author.
+
+    private static desc(prop: string): powerbi.visuals.FormattingDescriptor {
+        return { objectName: "tableStyle", propertyName: prop };
+    }
+
     private colorSlice(uid: string, name: string, prop: string, val: string): powerbi.visuals.FormattingSlice {
         return {
             uid, displayName: name,
             control: {
                 type: powerbi.visuals.FormattingComponent.ColorPicker,
-                properties: { descriptor: { objectName: "tableStyle", propertyName: prop }, value: { value: val } }
+                properties: { descriptor: Visual.desc(prop), value: { value: val } }
             }
         };
     }
+
+    private numSlice(uid: string, name: string, prop: string, val: number, min: number, max: number, unit?: string): powerbi.visuals.FormattingSlice {
+        return {
+            uid, displayName: name,
+            control: {
+                type: powerbi.visuals.FormattingComponent.NumUpDown,
+                properties: {
+                    descriptor: Visual.desc(prop),
+                    value: val,
+                    options: {
+                        unitSymbol: unit,
+                        minValue: { type: powerbi.visuals.ValidatorType.Min, value: min },
+                        maxValue: { type: powerbi.visuals.ValidatorType.Max, value: max }
+                    }
+                }
+            }
+        };
+    }
+
+    private toggleSlice(uid: string, name: string, prop: string, val: boolean): powerbi.visuals.FormattingSlice {
+        return {
+            uid, displayName: name,
+            control: {
+                type: powerbi.visuals.FormattingComponent.ToggleSwitch,
+                properties: { descriptor: Visual.desc(prop), value: val }
+            }
+        };
+    }
+
     public getFormattingModel(): powerbi.visuals.FormattingModel {
-        const c = this.lastC;
+        const s = this.lastS;
         return {
             cards: [
                 {
-                    uid: "tableStyleCard", displayName: "Text",
-                    groups: [{ uid: "tableTextGroup", displayName: "Text", slices: [{
-                        uid: "tableFontSizeSlice", displayName: "Font size",
-                        control: { type: powerbi.visuals.FormattingComponent.NumUpDown, properties: { descriptor: { objectName: "tableStyle", propertyName: "fontSize" }, value: this.lastFontSize } }
-                    }] }]
+                    uid: "tableTextCard", displayName: "Text",
+                    groups: [
+                        {
+                            uid: "tableFontGroup", displayName: "Font",
+                            slices: [
+                                {
+                                    uid: "tableFontFamilySlice", displayName: "Font family",
+                                    control: {
+                                        type: powerbi.visuals.FormattingComponent.FontPicker,
+                                        properties: { descriptor: Visual.desc("fontFamily"), value: s.fontFamily }
+                                    }
+                                },
+                                this.numSlice("tableFontSizeSlice", "Body font size", "fontSize", s.fontSize, 4, 200, "px"),
+                                this.numSlice("tableHeaderSizeSlice", "Header font size", "headerSize", s.headerSize, 4, 200, "px")
+                            ]
+                        },
+                        {
+                            uid: "tableTextColourGroup", displayName: "Text colours",
+                            slices: [
+                                this.colorSlice("tText", "Body text", "textColor", s.textColor),
+                                this.colorSlice("tValue", "Value cells", "valueColor", s.valueColor),
+                                this.colorSlice("tGroupLabel", "Group label", "groupColor", s.groupColor)
+                            ]
+                        }
+                    ]
                 },
                 {
                     uid: "tableColoursCard", displayName: "Colours",
-                    groups: [{ uid: "tableColoursGroup", displayName: "Colours", slices: [
-                        this.colorSlice("tHeaderBg", "Header background", "headerBg", c.headerBg),
-                        this.colorSlice("tHeaderText", "Header text", "headerColor", c.headerColor),
-                        this.colorSlice("tRowAlt", "Alternating row", "rowAltBg", c.rowAltBg),
-                        this.colorSlice("tAccent", "Accent", "accent", c.accent),
-                        this.colorSlice("tGood", "Up / good", "good", c.good),
-                        this.colorSlice("tBad", "Down / bad", "bad", c.bad),
-                        this.colorSlice("tNeutral", "Neutral", "neutral", c.neutral)
-                    ] }]
+                    groups: [
+                        {
+                            uid: "tableChromeGroup", displayName: "Table",
+                            slices: [
+                                this.colorSlice("tHeaderBg", "Header background", "headerBg", s.headerBg),
+                                this.colorSlice("tHeaderText", "Header text", "headerColor", s.headerColor),
+                                this.colorSlice("tRowAlt", "Alternating row", "rowAltBg", s.rowAltBg),
+                                this.colorSlice("tAccent", "Accent", "accent", s.accent)
+                            ]
+                        },
+                        {
+                            uid: "tableIndicatorGroup", displayName: "Indicators",
+                            slices: [
+                                this.colorSlice("tGood", "Up / good", "good", s.good),
+                                this.colorSlice("tBad", "Down / bad", "bad", s.bad),
+                                this.colorSlice("tNeutral", "Neutral", "neutral", s.neutral)
+                            ]
+                        },
+                        {
+                            uid: "tablePillGroup", displayName: "Code pills",
+                            slices: [
+                                this.colorSlice("tPillText", "Pill text", "pillColor", s.pillColor),
+                                this.colorSlice("tPillBg", "Pill background", "pillBg", s.pillBg)
+                            ]
+                        }
+                    ]
+                },
+                {
+                    uid: "tableLayoutCard", displayName: "Layout",
+                    groups: [{
+                        uid: "tableLayoutGroup", displayName: "Layout",
+                        slices: [
+                            this.numSlice("tDeltaCols", "Delta columns (from right)", "deltaColumnCount", s.deltaColumnCount, 0, 20),
+                            this.toggleSlice("tHideEmpty", "Hide empty columns", "hideEmptyColumns", s.hideEmptyColumns),
+                            this.toggleSlice("tSortByGroup", "Sort by group name", "sortByGroup", s.sortByGroup)
+                        ]
+                    }]
+                },
+                {
+                    uid: "tableHeatmapCard", displayName: "Heatmap",
+                    groups: [{
+                        uid: "tableHeatmapGroup", displayName: "Heatmap",
+                        slices: [
+                            this.toggleSlice("tHeatmap", "Shade numeric cells", "heatmap", s.heatmap),
+                            this.numSlice("tHeatCenter", "Centre value", "heatmapCenter", s.heatmapCenter, -1000000, 1000000),
+                            this.colorSlice("tHeatLow", "Below centre", "heatmapLow", s.heatmapLow),
+                            this.colorSlice("tHeatMid", "At centre", "heatmapMid", s.heatmapMid),
+                            this.colorSlice("tHeatHigh", "Above centre", "heatmapHigh", s.heatmapHigh)
+                        ]
+                    }]
                 }
             ]
         };

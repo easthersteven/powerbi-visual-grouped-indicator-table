@@ -18,7 +18,7 @@ Key features:
 - **Grouping with merged cells.** Rows that share a group value are drawn as one block with the group label merged down the left, so the table reads like a structured register rather than a flat grid.
 - **Row selection that drives the report.** Clicking a row cross filters the other visuals on the page, which makes the table a natural navigation hub. Ctrl click supports multi select and clicking empty space clears the selection.
 - **Colour coded values.** Delta columns are coloured good, bad or neutral, and code style values render as compact monospace pills. An optional heatmap shades numeric cells around a configurable centre point.
-- **Full Format pane styling.** Header colours, accent colour, alternating row shading, font size, heatmap colours and more are all configurable, so the table matches your report theme.
+- **Full Format pane styling.** Font family, body and header font sizes, and colours for body text, value cells and group labels. Header colours, accent colour, alternating row shading, code pill colours, the heatmap and its three colours, and the layout switches for delta columns, empty columns and group sorting. Every setting the visual has is in the Format pane.
 - **Certified friendly.** No external services, no data leaves your report, and the visual supports the Rendering Events API and context menus.
 
 Works well for KPI registers, programme scorecards, control and compliance registers, and any dataset where rows belong to a small number of named groups.
@@ -43,8 +43,8 @@ Works well for KPI registers, programme scorecards, control and compliance regis
 - Support document link: https://github.com/easthersteven/powerbi-visual-grouped-indicator-table/blob/main/SUPPORT.md
 
 **Technical configuration page:**
-- PBIVIZ package: `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.1.0.0.pbiviz`
-  (full path: `C:\Users\se518\powerbi-visuals\powerbi-visual-grouped-indicator-table\dist\groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.1.0.0.pbiviz`)
+- PBIVIZ package: `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.2.0.0.pbiviz`
+  (full path: `C:\Users\se518\powerbi-visuals\powerbi-visual-grouped-indicator-table\dist\groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.2.0.0.pbiviz`)
 - Sample PBIX: `store/grouped-indicator-table-sample.pbix` - must open offline with no external
   connections, embed its own sample data, and use this exact visual version.
 
@@ -59,6 +59,6 @@ Works well for KPI registers, programme scorecards, control and compliance regis
    Verified: npm audit clean, eslint clean, `pbiviz package --certification-audit`
    reports no external requests, capabilities declare `"privileges": []`.
 
-**Pre-publish checks (26 Aug 2026, v1.1.0.0):** npm audit 0 vulnerabilities; eslint
+**Pre-publish checks (27 Aug 2026, v1.2.0.0):** npm audit 0 vulnerabilities; eslint
 clean; unit tests pass; certification audit found no external requests; logo 300x300 and
 screenshot 1366x768 within size limits; main and certification branches identical.

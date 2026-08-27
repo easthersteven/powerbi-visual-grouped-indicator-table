@@ -178,9 +178,10 @@ test("finishes rendering without content when there is no data", () => {
     assert.deepEqual(captured.events, ["started", "finished"]);
 });
 
-test("getFormattingModel exposes text and colour cards", () => {
+test("getFormattingModel exposes text, colour, layout and heatmap cards", () => {
     const { visual } = makeVisual();
-    assert.equal(visual.getFormattingModel().cards.length, 2);
+    const names = visual.getFormattingModel().cards.map((c) => c.displayName);
+    assert.deepEqual(names, ["Text", "Colours", "Layout", "Heatmap"]);
 });
 
 test("right-click on a row opens the context menu", () => {
@@ -242,4 +243,76 @@ test("landing page explains the visual when no fields are bound", () => {
     const { visual, element } = makeVisual();
     visual.update({ dataViews: [{ metadata: {}, table: { columns: [], rows: [] } }] });
     assert.ok(element.querySelector(".gi-landing-title"));
+});
+
+// ---- Format pane coverage ------------------------------------------------------------
+
+// Collect every propertyName the Format pane actually renders, walking cards > groups > slices.
+function paneProperties(model) {
+    const names = new Set();
+    for (const card of model.cards ?? []) {
+        for (const group of card.groups ?? []) {
+            for (const slice of group.slices ?? []) {
+                const props = slice.control?.properties ?? {};
+                if (props.descriptor?.propertyName) names.add(props.descriptor.propertyName);
+                for (const v of Object.values(props)) {
+                    if (v && typeof v === "object" && v.descriptor?.propertyName) names.add(v.descriptor.propertyName);
+                }
+            }
+        }
+    }
+    return names;
+}
+
+// At API 5.x the Format pane is built solely from getFormattingModel, so a property declared
+// in capabilities.json but missing here is unreachable to the report author - it can only be
+// set by hand-editing a theme file. This guards against that drifting back.
+test("every declared property is reachable in the Format pane", async () => {
+    const { readFileSync } = await import("node:fs");
+    const caps = JSON.parse(readFileSync(new URL("../capabilities.json", import.meta.url), "utf8"));
+    const declared = Object.keys(caps.objects.tableStyle.properties);
+    const { visual } = makeVisual();
+    const shown = paneProperties(visual.getFormattingModel());
+    const missing = declared.filter((p) => !shown.has(p));
+    assert.deepEqual(missing, [], "properties declared but not shown in the Format pane");
+});
+
+test("the table renders the configured font, sizes and text colours", () => {
+    const { visual, element } = makeVisual();
+    const objects = {
+        tableStyle: {
+            fontFamily: "Georgia, serif",
+            fontSize: 17,
+            headerSize: 22,
+            textColor: { solid: { color: "#112233" } },
+            valueColor: { solid: { color: "#445566" } },
+            groupColor: { solid: { color: "#778899" } }
+        }
+    };
+    // a text value column puts the table in merge mode, so a merged group cell is rendered
+    const columns = [
+        col("Code", "T.Code", { groupBy: true }),
+        col("Name", "T.Name", { dimensions: true }),
+        col("Status", "_Measures.Status", { values: true }, { isMeasure: true }),
+        col("Now", "_Measures.Now", { values: true }, { isMeasure: true, format: "0%" }),
+        col("Change", "_Measures.Change", { values: true }, { isMeasure: true }),
+        col("Dir", "T.GoodDirection", { direction: true })
+    ];
+    // a plain group name (not a short code) renders as a group key cell rather than a pill
+    const rows = [["North", "Alpha", "Open", 0.5, "▲ 2pp", "up"], ["North", "Beta", "Open", 0.6, "▼ 1pp", "up"]];
+    update(visual, columns, rows, objects);
+    assert.equal(element.style.fontFamily, "Georgia, serif");
+    assert.equal(element.style.color, "rgb(17, 34, 51)");
+    assert.equal(element.querySelector("table.gi-table").style.fontSize, "17px");
+    assert.equal(element.querySelector("th").style.fontSize, "22px");
+    assert.equal(element.querySelector("td.grp-key").style.color, "rgb(119, 136, 153)");
+    assert.equal(element.querySelector("td.merged").style.color, "rgb(68, 85, 102)");
+});
+
+test("out-of-range numbers from a hand-edited theme fall back to the defaults", () => {
+    const { visual, element } = makeVisual();
+    const objects = { tableStyle: { fontSize: -3, headerSize: 9999, deltaColumnCount: 999 } };
+    update(visual, sampleColumns(), sampleRows(), objects);
+    assert.equal(element.querySelector("table.gi-table").style.fontSize, "12px");
+    assert.equal(element.querySelector("th").style.fontSize, "10px");
 });
