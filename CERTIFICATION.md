@@ -1,7 +1,8 @@
 # Certification status - Grouped Indicator Table
 
 **Publisher:** Obliwise
-**Submitted:** 24 August 2026 (v1.0.0.0) - awaiting review outcome
+**Submitted:** 24 August 2026 (v1.0.0.0) - no review outcome recorded
+**Resubmitted:** 27 August 2026 (v1.2.0.0) - awaiting review outcome
 
 ## Known risks, from the Accent KPI Card review (25 August 2026)
 
@@ -57,10 +58,10 @@ in "Testing submissions of Power BI custom visuals".
 | Sample .pbix embeds the submitted visual version (1180.2.3) | **Fixed** - sample embeds 1.2.0.0, byte-identical to `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.2.0.0.pbiviz` |
 | No external services; `privileges: []` | Pass - certification audit reports no external requests |
 
-`pbiviz package --certification-audit` reports **no recommended-feature warnings**. The
-features it still lists are informational extras (Analytics Pane, Conditional Formatting,
-Drill Down, Fetch More Data, File Download, Launch URL, Local Storage, Modal Dialog, Warning
-Icon); several of those would require privileges that certification forbids.
+`pbiviz package --certification-audit` reports no external requests. It also lists 8
+optional features - informational extras (Analytics Pane, Conditional Formatting, Drill
+Down, Fetch More Data, File Download, Launch URL, Local Storage, Modal Dialog, Warning
+Icon), several of which would require privileges that certification forbids.
 
 ## Format pane coverage (27 August 2026)
 
@@ -79,17 +80,20 @@ asserts that, so it cannot regress silently.
 
 ## Current state (27 August 2026)
 
-**Ready to submit:** 1.2.0.0. Package built and audited at
-`dist/` - upload that file on the Partner Center Technical configuration page, and paste the
-notes from `store/listing.md` into Notes for certification on Review and publish.
+**Submitted 27 August 2026 at 1.2.0.0. Awaiting review outcome.**
 
-**Outstanding before upload:** none in the repo. `store/grouped-indicator-table-sample.pbix`
-embeds 1.2.0.0, matching the package in `dist/`. Upload both slots together - uploading
-one alone is what produced the 1180.2.3 failure on Pill Toggle Slicer. The sample was
-updated by replacing the embedded visual payload in place rather than by a Save As from
-Desktop, so open it once in Power BI Desktop to confirm the visual renders before
-uploading.
+**What went up:** `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.2.0.0.pbiviz` and `store/grouped-indicator-table-sample.pbix`, uploaded together on the Technical
+configuration page, with the reviewer notes from `store/listing.md` pasted into Notes for
+certification on Review and publish.
 
-**Verified at this version:** npm audit 0 vulnerabilities; ESLint clean; 31 tests passing at
-97% statement coverage; `pbiviz package --certification-audit` reports no external requests
-and no recommended-feature warnings.
+**Sample file:** re-saved from Power BI Desktop on 27 August 2026. It embeds 1.2.0.0, matching
+the submitted package - JS, CSS and capabilities byte-identical. The model is import-mode
+with inline sample data, so it opens offline with no data sources, connectors or credentials.
+
+**Verified at this version:** npm audit 0 vulnerabilities; ESLint clean; 31 tests passing
+at 97% statement coverage; `pbiviz package --certification-audit` reports no external
+requests. It also lists 8 optional features - the informational extras described above,
+not failures.
+
+**If this review raises anything,** fix it in a new version and upload both slots again.
+Re-uploading one slot alone is what produced the 1180.2.3 failure on Pill Toggle Slicer.

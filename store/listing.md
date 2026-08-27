@@ -81,6 +81,6 @@ SAMPLE FILE
 grouped-indicator-table-sample.pbix opens offline: the model is import-mode with inline sample data, with no data sources, connectors or credentials. It embeds visual version 1.2.0.0, matching the submitted .pbiviz. Page 1 shows the visual with a native table over the same data on the same page, so cross-filtering from a row click is visible. Page 2 documents the field bindings and settings.
 ```
 
-**Pre-publish checks (27 Aug 2026, v1.2.0.0):** npm audit 0 vulnerabilities; eslint
+**Pre-publish checks - all passed; submitted to Partner Center 27 Aug 2026 (v1.2.0.0):** npm audit 0 vulnerabilities; eslint
 clean; unit tests pass; certification audit found no external requests; logo 300x300 and
 screenshot 1366x768 within size limits; main and certification branches identical.
