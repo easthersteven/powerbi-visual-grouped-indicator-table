@@ -64,7 +64,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Delta columns - the last N value columns are treated as deltas (Format pane > Table style > deltaColumnCount).",
+                    "value": "Delta columns - the last N value columns are treated as deltas (Format pane > Layout > Delta columns (from right)).",
                     "textStyle": {
                       "fontSize": "11pt",
                       "color": "#333333"
