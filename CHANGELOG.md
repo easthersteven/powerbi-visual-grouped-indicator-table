@@ -34,6 +34,11 @@ the mechanics of.
   selection when the report author has turned this visual's interactions off.
 - **Touch tooltips.** A tap on a row shows the same tooltip as hovering - mousemove never
   fires on touch devices.
+- **Pills only for code-like values.** When the group column did not look like short codes,
+  the first dimension column was pilled unconditionally, so ordinary text such as a region
+  name picked up the pill background and the Pill text colour instead of Body text. A
+  column is now pilled only when every value looks like a code (e.g. C57); ordinary text
+  renders as a plain cell that follows the Body text colour.
 
 ## 1.2.0.0 (2026-08-27)
 

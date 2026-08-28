@@ -120,6 +120,33 @@ test("renders short group codes as pills", () => {
     assert.equal(element.querySelectorAll("span.gi-pill").length, 1);
 });
 
+test("ordinary text is never pilled and follows the body text colour", () => {
+    const { visual, element } = makeVisual();
+    const columns = [
+        col("Region", "T.Region", { dimensions: true }),
+        col("Now", "_Measures.Now", { values: true }, { isMeasure: true })
+    ];
+    const objects = { tableStyle: { textColor: { solid: { color: "#112233" } } } };
+    update(visual, columns, [["North", 5], ["South", 6]], objects);
+    assert.equal(element.querySelectorAll("span.gi-pill").length, 0, "a region name is not a code pill");
+    const cell = [...element.querySelectorAll("tbody td")].find((td) => td.textContent === "North");
+    assert.equal(cell.style.color, "", "the cell inherits the root's Body text colour");
+    assert.equal(element.style.color, "rgb(17, 34, 51)");
+});
+
+test("a code-like dim column still gets pills when the group column is ordinary text", () => {
+    const { visual, element } = makeVisual();
+    const columns = [
+        col("Team", "T.Team", { groupBy: true }),
+        col("Code", "T.Code", { dimensions: true }),
+        col("Now", "_Measures.Now", { values: true }, { isMeasure: true })
+    ];
+    update(visual, columns, [["Alpha team", "C57", 5]]);
+    const pills = [...element.querySelectorAll("span.gi-pill")];
+    assert.equal(pills.length, 1);
+    assert.equal(pills[0].textContent, "C57");
+});
+
 test("merge mode spans shared value cells across the group's rows", () => {
     const { visual, element } = makeVisual();
     const columns = [

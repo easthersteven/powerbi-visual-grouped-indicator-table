@@ -219,9 +219,12 @@ export class Visual implements IVisual {
             const mergeMode = !!mergeCol && (!!groupCol || dimCols.length > 0);
             const mergedIdx = new Set<number>(mergeMode ? valCols.map((c) => c.index) : []);
 
-            // pill the group column when its values look like short codes (e.g. C57); else the first dim
-            const pillGroup = !!groupCol && table.rows.every((r) => { const v = String(r[groupCol.index] ?? ""); return v.length <= 6 && /^[A-Za-z]+\d+$/.test(v); });
-            const pillIdx = pillGroup ? groupCol!.index : (dimCols.length ? dimCols[0].index : -1);
+            // Pill a column only when its values look like short codes (e.g. C57) - the group
+            // column first, else the first dim. Ordinary text (a region, a name) renders as a
+            // plain cell that follows the Body text colour rather than the pill styling.
+            const looksLikeCode = (idx: number) => table.rows.every((r) => { const v = String(r[idx] ?? ""); return v.length <= 6 && /^[A-Za-z]+\d+$/.test(v); });
+            const pillIdx = groupCol && looksLikeCode(groupCol.index) ? groupCol.index
+                : (dimCols.length && looksLikeCode(dimCols[0].index) ? dimCols[0].index : -1);
 
             // ---- build row groups ----
             let rowIdx = table.rows.map((_, i) => i);
