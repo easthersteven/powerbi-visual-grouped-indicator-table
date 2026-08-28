@@ -272,7 +272,6 @@
             }
         }
     ],
-    "supportsHighlight": true,
     "tooltips": {
         "supportedTypes": {
             "default": true,

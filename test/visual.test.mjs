@@ -197,6 +197,37 @@ test("right-click on a row opens the context menu", () => {
 
 // ---- certification policy 1180.2.2.x -------------------------------------------------
 
+test("scroll bars render even on overlay-scrollbar hosts (1180.2.2)", async () => {
+    const { readFileSync } = await import("node:fs");
+    const raw = readFileSync(new URL("../style/visual.less", import.meta.url), "utf8");
+    const less = raw.replace(/\/\/[^\n]*/g, "");  // comments also mention the property names
+    assert.match(less, /::-webkit-scrollbar\b/, "webkit rules force a painted classic scrollbar on Chromium/WebView2");
+    const guard = less.indexOf("@supports (-moz-appearance: none)");
+    const std = less.indexOf("scrollbar-width");
+    assert.ok(guard >= 0, "the Firefox-only @supports guard must exist");
+    assert.ok(std > guard, "standard scrollbar properties must sit inside the Firefox guard - on Chromium they restyle the invisible overlay scrollbar and defeat the webkit rules");
+    assert.equal(less.split("scrollbar-width").length, 2, "scrollbar-width must appear exactly once, inside the guard");
+});
+
+test("high contrast: every row takes the host background, never hard-coded white", () => {
+    const { visual, element, captured } = makeVisual();
+    captured.palette.isHighContrast = true;
+    update(visual, sampleColumns(), sampleRows());
+    const rows = [...element.querySelectorAll("tbody tr")];
+    assert.ok(rows.length >= 2);
+    for (const tr of rows) assert.equal(tr.style.background, "rgb(0, 0, 0)", "foreground-coloured text must never sit on hard-coded white");
+    assert.equal(element.classList.contains("hc"), true, "the hc class suppresses the tinted hover/selection backgrounds");
+});
+
+test("clicking empty space does not clear the selection when interactions are off", async () => {
+    const { visual, element, captured } = makeVisual();
+    captured.hostCapabilities = { allowInteractions: false };
+    update(visual, sampleColumns(), sampleRows());
+    element.dispatchEvent(new dom.window.MouseEvent("click"));
+    await flush();
+    assert.equal(captured.cleared, 0, "Edit interactions off must also cover the clear gesture");
+});
+
 test("scrolls rather than clipping when the host shrinks the visual (1180.2.2)", async () => {
     const { readFileSync } = await import("node:fs");
     const less = readFileSync(new URL("../style/visual.less", import.meta.url), "utf8");

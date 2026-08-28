@@ -41,7 +41,7 @@ in "Testing submissions of Power BI custom visuals".
 | Tooltips on hover, correct after filtering | **Fixed** - host tooltip service, plus the `tooltips` capability |
 | Filters outward to other visuals | **Fixed** - selection through `ISelectionManager` |
 | Reflects selection made in other visuals | Pass - renders from the incoming dataView |
-| Highlighting from another visual | **Fixed** - shows the highlighted figure, `supportsHighlight` |
+| Highlighting from another visual | **Not applicable, declaration removed (1.3.0.0)** - a table data mapping cannot receive highlights, so `supportsHighlight` was wrongly declared and is gone. Cross-filtering into the table works through the filtered dataView |
 | Edit interactions turned off | **Fixed** - guarded by `hostCapabilities.allowInteractions` |
 | Ctrl / Alt / Shift selection | Pass - Ctrl and Cmd add to the selection |
 | min/max dataViewMapping conditions | **Fixed** - conditions declared |
@@ -55,7 +55,7 @@ in "Testing submissions of Power BI custom visuals".
 | Landing page when nothing is bound | **Fixed** - explains what to bind |
 | Localization | **Fixed** - `stringResources` and the host localization manager |
 | Bookmarks | Pass |
-| Sample .pbix embeds the submitted visual version (1180.2.3) | **Fixed** - sample embeds 1.2.0.0, byte-identical to `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.2.0.0.pbiviz` |
+| Sample .pbix embeds the submitted visual version (1180.2.3) | **Fixed** - sample embeds 1.3.0.0, matching `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.3.0.0.pbiviz` |
 | No external services; `privileges: []` | Pass - certification audit reports no external requests |
 
 `pbiviz package --certification-audit` reports no external requests. It also lists 8
@@ -86,10 +86,13 @@ asserts that, so it cannot regress silently.
 reviewer raised against Accent KPI Card on 27 August 2026 (1180.2.2: overlay scrollbars on
 WebView2 paint nothing, so a shrunken visual looks clipped) by styling the scrollbars so a
 visible bar renders whenever content overflows, and adds a Wrap text toggle (Format pane >
-Layout). The sample .pbix on `main` embeds 1.3.0.0. **The `certification` branch stays at
-1.2.0.0 until this review completes** - it must match the package under review. If the
-review fails 1180.2.2, resubmit 1.3.0.0 (both slots together) and push
-`main:certification`; if it passes, 1.3.0.0 ships as a normal update later.
+Layout). 1.3.0.0 also corrects the scrollbar styling (the standard properties are
+Firefox-gated - on Chromium they restyle the invisible overlay bar), removes the wrong
+`supportsHighlight` declaration (a table mapping cannot receive highlights), fixes the
+high-contrast white-on-white row background, honours Edit interactions for the
+empty-space clear, and adds touch tooltips. The sample .pbix embeds 1.3.0.0.
+**`main` and `certification` are pushed together at 1.3.0.0** (the offer is being
+updated); upload both slots together when submitting.
 
 **What went up:** `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.2.0.0.pbiviz` and `store/grouped-indicator-table-sample.pbix`, uploaded together on the Technical
 configuration page, with the reviewer notes from `store/listing.md` pasted into Notes for
@@ -99,7 +102,7 @@ certification on Review and publish.
 the submitted package - JS, CSS and capabilities byte-identical. The model is import-mode
 with inline sample data, so it opens offline with no data sources, connectors or credentials.
 
-**Verified at this version:** npm audit 0 vulnerabilities; ESLint clean; 31 tests passing
+**Verified at this version:** npm audit 0 vulnerabilities; ESLint clean; 34 tests passing
 at 97% statement coverage; `pbiviz package --certification-audit` reports no external
 requests. It also lists 8 optional features - the informational extras described above,
 not failures.

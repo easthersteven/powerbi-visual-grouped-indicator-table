@@ -78,7 +78,12 @@ export class Visual implements IVisual {
         this.localization = options.host.createLocalizationManager?.();
         this.root = options.element;
         this.root.classList.add("gi-table-root");
-        this.root.addEventListener("click", () => { this.selectionManager.clear(); this.selectedKeys.clear(); this.applySel(); });
+        this.root.addEventListener("click", () => {
+            // Clicking empty space clears the selection - but not when the report author
+            // has turned this visual's interactions off (Edit interactions).
+            if (this.host.hostCapabilities?.allowInteractions === false) return;
+            this.selectionManager.clear(); this.selectedKeys.clear(); this.applySel();
+        });
         this.root.addEventListener("contextmenu", (ev) => {
             this.selectionManager.showContextMenu({} as unknown as powerbi.visuals.ISelectionId, { x: ev.clientX, y: ev.clientY });
             ev.preventDefault();
@@ -147,7 +152,11 @@ export class Visual implements IVisual {
             // High contrast mode: take every colour from the host palette so the table stays
             // legible under the user's accessibility theme, and drop the heatmap shading
             // (a diverging scale carries no meaning in a two-colour theme).
-            if (this.colorPalette?.isHighContrast === true) {
+            const hc = this.colorPalette?.isHighContrast === true;
+            // The stylesheet's hard-coded hover/selection backgrounds are suppressed under
+            // high contrast (they would sit fore-coloured text on a near-white tint).
+            this.root.classList.toggle("hc", hc);
+            if (hc) {
                 const fore = this.colorPalette.foreground?.value;
                 const back = this.colorPalette.background?.value;
                 s.headerBg = back; s.headerColor = fore; s.rowAltBg = back; s.accent = fore;
@@ -259,7 +268,9 @@ export class Visual implements IVisual {
             const tbody = el("tbody");
             order.forEach((gkey, gi) => {
                 const rowIdxs = groups.get(gkey)!;
-                const groupBg = gi % 2 === 1 ? s.rowAltBg : "#FFFFFF";
+                // Even groups are plain white - except in high contrast, where every row
+                // takes the host background so text never lands on hard-coded white.
+                const groupBg = gi % 2 === 1 || hc ? s.rowAltBg : "#FFFFFF";
                 const direction = dirCol ? String(table.rows[rowIdxs[0]][dirCol.index] ?? "") : "";
                 // group selection: clicking any row selects the whole group -> cross-filters the page
                 const groupIds: powerbi.extensibility.ISelectionId[] = [];
@@ -304,19 +315,22 @@ export class Visual implements IVisual {
                     tr.tabIndex = 0;
                     tr.setAttribute("role", "row");
 
-                    // Host tooltip: the whole row, column by column.
-                    tr.addEventListener("mousemove", (ev) => {
+                    // Host tooltip: the whole row, column by column. Touch devices get the
+                    // same tooltip from a tap (pointerdown) - mousemove never fires there.
+                    const showTip = (ev: MouseEvent, isTouch: boolean) => {
                         const rect = this.root.getBoundingClientRect();
                         this.tooltipService?.show({
                             coordinates: [ev.clientX - rect.left, ev.clientY - rect.top],
-                            isTouchEvent: false,
+                            isTouchEvent: isTouch,
                             dataItems: display.map((c) => ({
                                 displayName: c.name || String(c.index),
                                 value: String(table.rows[ri][c.index] ?? ""),
                             })),
                             identities: groupIds.length ? [groupIds[0]] : [],
                         });
-                    });
+                    };
+                    tr.addEventListener("mousemove", (ev) => showTip(ev, false));
+                    tr.addEventListener("pointerdown", (ev: PointerEvent) => { if (ev.pointerType === "touch") showTip(ev, true); });
                     tr.addEventListener("mouseleave", () => this.tooltipService?.hide({ immediately: true, isTouchEvent: false }));
 
                     tr.addEventListener("keydown", (ev: KeyboardEvent) => {

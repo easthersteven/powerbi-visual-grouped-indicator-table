@@ -69,24 +69,23 @@ WHAT THE VISUAL DOES
 A table whose rows are collected into groups, with the shared group cell merged down the left. Delta columns are coloured good, bad or neutral from the leading arrow character and a per-group direction field, so a falling defect count reads green. Clicking a row cross-filters the page by that group; Ctrl+click multi-selects and clicking empty space clears. An optional heatmap shades numeric cells around a configurable centre.
 
 CHANGES IN THIS VERSION
-Scroll bars are now explicitly styled (scrollbar-width/scrollbar-color plus ::-webkit-scrollbar), so a persistent thin bar with a visible track renders whenever content overflows, vertically and horizontally, even on hosts whose overlay scrollbars paint nothing until scrolled (WebView2 with Windows' "automatically hide scroll bars" default). Under high contrast the scrollbar takes its colours from the host palette. A new Wrap text toggle (Format pane, Layout) wraps headers and cells onto further lines instead of scrolling sideways.
+Scroll bars are now explicitly styled with ::-webkit-scrollbar rules, so a persistent thin bar with a visible track renders whenever content overflows, vertically and horizontally, even on hosts whose overlay scrollbars paint nothing until scrolled (WebView2 with Windows' "automatically hide scroll bars" default); the standard scrollbar-width/scrollbar-color properties are served to Firefox only, where those rules do not exist. Under high contrast the scrollbar takes its colours from the host palette, every row takes the host background, and the tinted hover/selection backgrounds are suppressed. A new Wrap text toggle (Format pane, Layout) wraps headers and cells onto further lines instead of scrolling sideways. Tooltips also show from a tap on touch devices, and clicking empty space no longer clears the selection when the report's Edit interactions setting has this visual's interactions off. The supportsHighlight declaration was removed - a table data mapping cannot receive highlights, and the previous claim that it did was incorrect.
 
 CARRIED OVER FROM 1.2.0.0
 Every property declared in capabilities.json is now returned from getFormattingModel, so the whole configuration surface is reachable in the Format pane - previously the code pill colours, heatmap and layout switches could only be set through a theme file. Adds a font family picker, a header font size separate from the body size, and colours for body text, value cells and group labels. Numeric settings are range-checked, so an out-of-range value falls back to its default rather than rendering an unusable table.
 
 HOST BEHAVIOUR AND ACCESSIBILITY
-The root container is overflow:auto, so the table gains scroll bars rather than clipping when the host shrinks it. Hovering a row shows it column by column through the host tooltip service. High contrast mode takes every colour from the host palette and drops the heatmap, which carries no meaning in a two-colour theme. Rows are focusable and Enter or Space selects them; supportsKeyboardFocus is declared. Honours the report's Edit interactions setting, reflects highlighting from other visuals (supportsHighlight), and supports the Rendering Events API and context menus. Strings are localised through stringResources and the host localization manager, and a landing page explains the visual when nothing is bound.
+The root container is overflow:auto with explicitly styled scroll bars, so the table gains visible scroll bars rather than clipping when the host shrinks it. Hovering a row shows it column by column through the host tooltip service; on touch devices a tap shows the same tooltip. High contrast mode takes every colour from the host palette and drops the heatmap, which carries no meaning in a two-colour theme. Rows are focusable and Enter or Space selects them; supportsKeyboardFocus is declared. Honours the report's Edit interactions setting for both selecting and clearing, responds to cross-filtering from other visuals through the filtered dataView, and supports the Rendering Events API and context menus. Strings are localised through stringResources and the host localization manager, and a landing page explains the visual when nothing is bound.
 
 SECURITY AND PRIVACY
-No external services and no network calls of any kind; no data leaves the report. capabilities.json declares "privileges": []. pbiviz package --certification-audit reports no external requests. npm audit reports 0 vulnerabilities. 31 unit tests pass.
+No external services and no network calls of any kind; no data leaves the report. capabilities.json declares "privileges": []. pbiviz package --certification-audit reports no external requests. npm audit reports 0 vulnerabilities. 34 unit tests pass.
 
 SAMPLE FILE
 grouped-indicator-table-sample.pbix opens offline: the model is import-mode with inline sample data, with no data sources, connectors or credentials. It embeds visual version 1.3.0.0, matching the .pbiviz above. Page 1 shows the visual with a native table over the same data on the same page, so cross-filtering from a row click is visible. Page 2 documents the field bindings and settings.
 ```
 
 **Pre-publish checks - passed 28 Aug 2026 (v1.3.0.0), not submitted:** npm audit 0
-vulnerabilities; eslint clean; 31 unit tests pass; certification audit found no external
-requests. The 27 Aug 2026 submission (v1.2.0.0) is still in review; the `certification`
-branch stays at 1.2.0.0 until that completes. Before any 1.3.0.0 submission: open
-`store/grouped-indicator-table-sample.pbix` once in Power BI Desktop to confirm it renders,
-upload both slots together, and push `main:certification`.
+vulnerabilities; eslint clean; 34 unit tests pass; certification audit found no external
+requests. `main` and `certification` are pushed together at 1.3.0.0 for the offer
+update. Before submitting: open `store/grouped-indicator-table-sample.pbix` once in
+Power BI Desktop to confirm it renders, then upload both slots together.

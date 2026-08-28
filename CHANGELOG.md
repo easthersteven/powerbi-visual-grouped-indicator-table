@@ -17,6 +17,23 @@ the mechanics of.
 - **Wrap text (Format pane > Layout).** Off by default (the table scrolls). Turned on,
   headers and cells break onto further lines instead of scrolling sideways; vertical
   scrolling still applies when the wrapped table is taller than the visual.
+- **Scrollbar styling corrected.** The standard `scrollbar-width`/`scrollbar-color`
+  properties override `::-webkit-scrollbar` on Chromium and merely restyle the invisible
+  overlay bar there, so they are now served to Firefox only
+  (`@supports (-moz-appearance: none)`); the `::-webkit-scrollbar` rules force the real
+  painted bar on Chromium/WebView2. Pinned by a unit test.
+- **`supportsHighlight` removed.** The visual uses a table data mapping, which cannot
+  receive highlights, so the declaration (and the listing's claim) were wrong. Cross-
+  filtering into the table still works - the host filters the rows it sends.
+- **High contrast: no more white-on-white.** Even-numbered groups had a hard-coded white
+  background under every theme, which put the host's foreground text on white in a
+  black-background high-contrast theme. Every row now takes the host background, and the
+  tinted hover/selection backgrounds are suppressed (selection stays visible through the
+  inset accent bar and dimming).
+- **Edit interactions fully honoured.** Clicking empty space no longer clears the
+  selection when the report author has turned this visual's interactions off.
+- **Touch tooltips.** A tap on a row shows the same tooltip as hovering - mousemove never
+  fires on touch devices.
 
 ## 1.2.0.0 (2026-08-27)
 

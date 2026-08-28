@@ -4,12 +4,19 @@
     overflow: auto;
     // Overlay scrollbars (WebView2 with Windows "automatically hide scroll bars", the
     // Power BI Desktop default) occupy no space and paint nothing until the user scrolls,
-    // so a shrunken table looks clipped. Styling the scrollbar opts this element out of
-    // overlay rendering: a visible bar appears whenever content overflows (certification
-    // policy 1180.2.2). The standard properties win on Chromium 121+ and Firefox; the
-    // ::-webkit-* rules cover older WebView2 hosts.
-    scrollbar-width: thin;
-    scrollbar-color: var(--gi-scrollbar-thumb, rgba(96, 94, 92, 0.55)) var(--gi-scrollbar-track, rgba(96, 94, 92, 0.12));
+    // so a shrunken table looks clipped (certification policy 1180.2.2). The
+    // ::-webkit-scrollbar rules below opt Chromium out of overlay rendering: a real bar
+    // occupies its gutter and stays painted whenever content overflows.
+    //
+    // The standard scrollbar-width/scrollbar-color properties are served to Firefox ONLY
+    // (it has no ::-webkit-scrollbar). They must not reach Chromium: there they override
+    // the ::-webkit-* rules and merely restyle the OVERLAY scrollbar - thin, fading,
+    // zero layout space - which reintroduces the invisible-scrollbar failure (verified
+    // against Edge with overlay scrollbars force-enabled).
+    @supports (-moz-appearance: none) {
+        scrollbar-width: thin;
+        scrollbar-color: var(--gi-scrollbar-thumb, rgba(96, 94, 92, 0.55)) var(--gi-scrollbar-track, rgba(96, 94, 92, 0.12));
+    }
 
     &::-webkit-scrollbar {
         width: 8px;
@@ -89,6 +96,13 @@
     }
     tbody tr.sel td {
         background: #dcefe9 !important;
+    }
+    // High contrast: the tinted hover/selection backgrounds above would put the host's
+    // foreground text on a near-white tint. Selection stays visible through the inset
+    // accent bar and the dimming of unselected rows applied from visual.ts.
+    &.hc tbody tr:hover td,
+    &.hc tbody tr.sel td {
+        background: transparent !important;
     }
 
     .gi-pill {
