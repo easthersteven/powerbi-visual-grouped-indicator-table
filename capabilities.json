@@ -140,6 +140,11 @@
                         "bool": true
                     }
                 },
+                "showPills": {
+                    "type": {
+                        "bool": true
+                    }
+                },
                 "heatmap": {
                     "type": {
                         "bool": true

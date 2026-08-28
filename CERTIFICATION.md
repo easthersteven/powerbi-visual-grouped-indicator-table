@@ -75,7 +75,7 @@ configuration" test and makes any listing claim about it false.
 **Newly added because nothing existed behind them:** a font family picker, a separate header font size, and colours for body text, value cells and group labels - each was previously
 hardcoded in `style/visual.less`.
 
-All 23 declared properties are now returned from `getFormattingModel`, and a unit test
+All 25 declared properties are now returned from `getFormattingModel`, and a unit test
 asserts that, so it cannot regress silently.
 
 ## Current state (28 August 2026)
@@ -102,7 +102,7 @@ certification on Review and publish.
 the submitted package - JS, CSS and capabilities byte-identical. The model is import-mode
 with inline sample data, so it opens offline with no data sources, connectors or credentials.
 
-**Verified at this version:** npm audit 0 vulnerabilities; ESLint clean; 34 tests passing
+**Verified at this version:** npm audit 0 vulnerabilities; ESLint clean; 37 tests passing
 at 97% statement coverage; `pbiviz package --certification-audit` reports no external
 requests. It also lists 8 optional features - the informational extras described above,
 not failures.

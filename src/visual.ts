@@ -22,7 +22,7 @@ interface Style {
     pillColor: string; pillBg: string; good: string; bad: string; neutral: string;
     fontFamily: string; fontSize: number; headerSize: number;
     textColor: string; valueColor: string; groupColor: string;
-    deltaColumnCount: number; hideEmptyColumns: boolean; sortByGroup: boolean; wrapText: boolean;
+    deltaColumnCount: number; hideEmptyColumns: boolean; sortByGroup: boolean; wrapText: boolean; showPills: boolean;
     heatmap: boolean; heatmapCenter: number; heatmapLow: string; heatmapMid: string; heatmapHigh: string;
 }
 const DEFAULTS: Style = {
@@ -30,7 +30,7 @@ const DEFAULTS: Style = {
     pillColor: "#016C8D", pillBg: "#e7f1f4", good: "#0F7A2C", bad: "#9E2F24", neutral: "#605E5C",
     fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 12, headerSize: 10,
     textColor: "#252423", valueColor: "#023864", groupColor: "#023864",
-    deltaColumnCount: 1, hideEmptyColumns: false, sortByGroup: false, wrapText: false,
+    deltaColumnCount: 1, hideEmptyColumns: false, sortByGroup: false, wrapText: false, showPills: true,
     heatmap: false, heatmapCenter: 1, heatmapLow: "#2C7FB8", heatmapMid: "#FFFFFF", heatmapHigh: "#E8843C",
 };
 
@@ -143,6 +143,7 @@ export class Visual implements IVisual {
                 hideEmptyColumns: (o?.["hideEmptyColumns"] as boolean) ?? DEFAULTS.hideEmptyColumns,
                 sortByGroup: (o?.["sortByGroup"] as boolean) ?? DEFAULTS.sortByGroup,
                 wrapText: (o?.["wrapText"] as boolean) ?? DEFAULTS.wrapText,
+                showPills: (o?.["showPills"] as boolean) ?? DEFAULTS.showPills,
                 heatmap: (o?.["heatmap"] as boolean) ?? DEFAULTS.heatmap,
                 heatmapCenter: (o?.["heatmapCenter"] as number) ?? DEFAULTS.heatmapCenter,
                 heatmapLow: fill(o, "heatmapLow", DEFAULTS.heatmapLow),
@@ -222,8 +223,10 @@ export class Visual implements IVisual {
             // Pill a column only when its values look like short codes (e.g. C57) - the group
             // column first, else the first dim. Ordinary text (a region, a name) renders as a
             // plain cell that follows the Body text colour rather than the pill styling.
+            // "Show code pills" (Format pane > Colours > Code pills) turns pilling off entirely.
             const looksLikeCode = (idx: number) => table.rows.every((r) => { const v = String(r[idx] ?? ""); return v.length <= 6 && /^[A-Za-z]+\d+$/.test(v); });
-            const pillIdx = groupCol && looksLikeCode(groupCol.index) ? groupCol.index
+            const pillIdx = !s.showPills ? -1
+                : groupCol && looksLikeCode(groupCol.index) ? groupCol.index
                 : (dimCols.length && looksLikeCode(dimCols[0].index) ? dimCols[0].index : -1);
 
             // ---- build row groups ----
@@ -488,6 +491,7 @@ export class Visual implements IVisual {
                         {
                             uid: "tablePillGroup", displayName: "Code pills",
                             slices: [
+                                this.toggleSlice("tShowPills", "Show code pills", "showPills", s.showPills),
                                 this.colorSlice("tPillText", "Pill text", "pillColor", s.pillColor),
                                 this.colorSlice("tPillBg", "Pill background", "pillBg", s.pillBg)
                             ]

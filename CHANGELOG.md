@@ -39,6 +39,9 @@ the mechanics of.
   name picked up the pill background and the Pill text colour instead of Body text. A
   column is now pilled only when every value looks like a code (e.g. C57); ordinary text
   renders as a plain cell that follows the Body text colour.
+- **Show code pills toggle** (Format pane > Colours > Code pills, on by default). Turned
+  off, even code-like values render as plain cells - for reports where the pill treatment
+  is not wanted at all.
 
 ## 1.2.0.0 (2026-08-27)
 

@@ -147,6 +147,18 @@ test("a code-like dim column still gets pills when the group column is ordinary 
     assert.equal(pills[0].textContent, "C57");
 });
 
+test("Show code pills off renders even code-like values as plain cells", () => {
+    const { visual, element } = makeVisual();
+    const columns = [
+        col("Code", "T.Code", { groupBy: true }),
+        col("Now", "_Measures.Now", { values: true }, { isMeasure: true })
+    ];
+    const objects = { tableStyle: { showPills: false } };
+    update(visual, columns, [["C57", 5]], objects);
+    assert.equal(element.querySelectorAll("span.gi-pill").length, 0);
+    assert.ok([...element.querySelectorAll("tbody td")].some((td) => td.textContent === "C57"), "the value still renders, unpilled");
+});
+
 test("merge mode spans shared value cells across the group's rows", () => {
     const { visual, element } = makeVisual();
     const columns = [

@@ -17,7 +17,7 @@ Key features:
 
 - **Grouping with merged cells.** Rows that share a group value are drawn as one block with the group label merged down the left, so the table reads like a structured register rather than a flat grid.
 - **Row selection that drives the report.** Clicking a row cross filters the other visuals on the page, which makes the table a natural navigation hub. Ctrl click supports multi select and clicking empty space clears the selection.
-- **Colour coded values.** Delta columns are coloured good, bad or neutral, and code style values render as compact monospace pills. An optional heatmap shades numeric cells around a configurable centre point.
+- **Colour coded values.** Delta columns are coloured good, bad or neutral, and code style values render as compact monospace pills (with a Format pane toggle to turn pills off). An optional heatmap shades numeric cells around a configurable centre point.
 - **Full Format pane styling.** Font family, body and header font sizes, and colours for body text, value cells and group labels. Header colours, accent colour, alternating row shading, code pill colours, the heatmap and its three colours, and the layout switches for delta columns, empty columns and group sorting. Every setting the visual has is in the Format pane.
 - **Certified friendly.** No external services, no data leaves your report, and the visual supports the Rendering Events API and context menus.
 
@@ -78,14 +78,14 @@ HOST BEHAVIOUR AND ACCESSIBILITY
 The root container is overflow:auto with explicitly styled scroll bars, so the table gains visible scroll bars rather than clipping when the host shrinks it. Hovering a row shows it column by column through the host tooltip service; on touch devices a tap shows the same tooltip. High contrast mode takes every colour from the host palette and drops the heatmap, which carries no meaning in a two-colour theme. Rows are focusable and Enter or Space selects them; supportsKeyboardFocus is declared. Honours the report's Edit interactions setting for both selecting and clearing, responds to cross-filtering from other visuals through the filtered dataView, and supports the Rendering Events API and context menus. Strings are localised through stringResources and the host localization manager, and a landing page explains the visual when nothing is bound.
 
 SECURITY AND PRIVACY
-No external services and no network calls of any kind; no data leaves the report. capabilities.json declares "privileges": []. pbiviz package --certification-audit reports no external requests. npm audit reports 0 vulnerabilities. 34 unit tests pass.
+No external services and no network calls of any kind; no data leaves the report. capabilities.json declares "privileges": []. pbiviz package --certification-audit reports no external requests. npm audit reports 0 vulnerabilities. 37 unit tests pass.
 
 SAMPLE FILE
 grouped-indicator-table-sample.pbix opens offline: the model is import-mode with inline sample data, with no data sources, connectors or credentials. It embeds visual version 1.3.0.0, matching the .pbiviz above. Page 1 shows the visual with a native table over the same data on the same page, so cross-filtering from a row click is visible. Page 2 documents the field bindings and settings.
 ```
 
 **Pre-publish checks - passed 28 Aug 2026 (v1.3.0.0), not submitted:** npm audit 0
-vulnerabilities; eslint clean; 34 unit tests pass; certification audit found no external
+vulnerabilities; eslint clean; 37 unit tests pass; certification audit found no external
 requests. `main` and `certification` are pushed together at 1.3.0.0 for the offer
 update. Before submitting: open `store/grouped-indicator-table-sample.pbix` once in
 Power BI Desktop to confirm it renders, then upload both slots together.
