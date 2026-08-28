@@ -43,8 +43,8 @@ Works well for KPI registers, programme scorecards, control and compliance regis
 - Support document link: https://github.com/easthersteven/powerbi-visual-grouped-indicator-table/blob/main/SUPPORT.md
 
 **Technical configuration page:**
-- PBIVIZ package: `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.2.0.0.pbiviz`
-  (full path: `C:\Users\se518\powerbi-visuals\powerbi-visual-grouped-indicator-table\dist\groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.2.0.0.pbiviz`)
+- PBIVIZ package: `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.3.0.0.pbiviz`
+  (full path: `C:\Users\se518\powerbi-visuals\powerbi-visual-grouped-indicator-table\dist\groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.3.0.0.pbiviz`)
 - Sample PBIX: `store/grouped-indicator-table-sample.pbix` - must open offline with no external
   connections, embed its own sample data, and use this exact visual version.
 
@@ -55,8 +55,8 @@ Works well for KPI registers, programme scorecards, control and compliance regis
    line so it pastes without re-wrapping.
 
 ```text
-Grouped Indicator Table 1.2.0.0
-Supersedes 1.0.0.0, submitted 24 August 2026.
+Grouped Indicator Table 1.3.0.0
+Supersedes 1.2.0.0, submitted 27 August 2026.
 
 SOURCE AND BUILD
 Repository: https://github.com/easthersteven/powerbi-visual-grouped-indicator-table
@@ -69,6 +69,9 @@ WHAT THE VISUAL DOES
 A table whose rows are collected into groups, with the shared group cell merged down the left. Delta columns are coloured good, bad or neutral from the leading arrow character and a per-group direction field, so a falling defect count reads green. Clicking a row cross-filters the page by that group; Ctrl+click multi-selects and clicking empty space clears. An optional heatmap shades numeric cells around a configurable centre.
 
 CHANGES IN THIS VERSION
+Scroll bars are now explicitly styled (scrollbar-width/scrollbar-color plus ::-webkit-scrollbar), so a persistent thin bar with a visible track renders whenever content overflows, vertically and horizontally, even on hosts whose overlay scrollbars paint nothing until scrolled (WebView2 with Windows' "automatically hide scroll bars" default). Under high contrast the scrollbar takes its colours from the host palette. A new Wrap text toggle (Format pane, Layout) wraps headers and cells onto further lines instead of scrolling sideways.
+
+CARRIED OVER FROM 1.2.0.0
 Every property declared in capabilities.json is now returned from getFormattingModel, so the whole configuration surface is reachable in the Format pane - previously the code pill colours, heatmap and layout switches could only be set through a theme file. Adds a font family picker, a header font size separate from the body size, and colours for body text, value cells and group labels. Numeric settings are range-checked, so an out-of-range value falls back to its default rather than rendering an unusable table.
 
 HOST BEHAVIOUR AND ACCESSIBILITY
@@ -78,9 +81,12 @@ SECURITY AND PRIVACY
 No external services and no network calls of any kind; no data leaves the report. capabilities.json declares "privileges": []. pbiviz package --certification-audit reports no external requests. npm audit reports 0 vulnerabilities. 31 unit tests pass.
 
 SAMPLE FILE
-grouped-indicator-table-sample.pbix opens offline: the model is import-mode with inline sample data, with no data sources, connectors or credentials. It embeds visual version 1.2.0.0, matching the submitted .pbiviz. Page 1 shows the visual with a native table over the same data on the same page, so cross-filtering from a row click is visible. Page 2 documents the field bindings and settings.
+grouped-indicator-table-sample.pbix opens offline: the model is import-mode with inline sample data, with no data sources, connectors or credentials. It embeds visual version 1.3.0.0, matching the .pbiviz above. Page 1 shows the visual with a native table over the same data on the same page, so cross-filtering from a row click is visible. Page 2 documents the field bindings and settings.
 ```
 
-**Pre-publish checks - all passed; submitted to Partner Center 27 Aug 2026 (v1.2.0.0):** npm audit 0 vulnerabilities; eslint
-clean; unit tests pass; certification audit found no external requests; logo 300x300 and
-screenshot 1366x768 within size limits; main and certification branches identical.
+**Pre-publish checks - passed 28 Aug 2026 (v1.3.0.0), not submitted:** npm audit 0
+vulnerabilities; eslint clean; 31 unit tests pass; certification audit found no external
+requests. The 27 Aug 2026 submission (v1.2.0.0) is still in review; the `certification`
+branch stays at 1.2.0.0 until that completes. Before any 1.3.0.0 submission: open
+`store/grouped-indicator-table-sample.pbix` once in Power BI Desktop to confirm it renders,
+upload both slots together, and push `main:certification`.

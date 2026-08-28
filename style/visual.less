@@ -2,6 +2,32 @@
     width: 100%;
     height: 100%;
     overflow: auto;
+    // Overlay scrollbars (WebView2 with Windows "automatically hide scroll bars", the
+    // Power BI Desktop default) occupy no space and paint nothing until the user scrolls,
+    // so a shrunken table looks clipped. Styling the scrollbar opts this element out of
+    // overlay rendering: a visible bar appears whenever content overflows (certification
+    // policy 1180.2.2). The standard properties win on Chromium 121+ and Firefox; the
+    // ::-webkit-* rules cover older WebView2 hosts.
+    scrollbar-width: thin;
+    scrollbar-color: var(--gi-scrollbar-thumb, rgba(96, 94, 92, 0.55)) var(--gi-scrollbar-track, rgba(96, 94, 92, 0.12));
+
+    &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--gi-scrollbar-thumb, rgba(96, 94, 92, 0.55));
+        border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: var(--gi-scrollbar-track, rgba(96, 94, 92, 0.12));
+    }
+
+    &::-webkit-scrollbar-corner {
+        background: transparent;
+    }
     font-family: "Segoe UI", system-ui, sans-serif;
     color: #252423;
     // Crispness under page scaling (Fit to page / high-DPI): grayscale smoothing on both engines
@@ -72,6 +98,19 @@
         border-radius: 4px;
         display: inline-block;
         white-space: nowrap;
+    }
+
+    // Wrap mode (Format pane > Layout > Wrap text): headers and cells break onto further
+    // lines instead of scrolling sideways. The root still scrolls vertically when the
+    // wrapped table is taller than the visual, so nothing becomes unreachable (1180.2.2).
+    &.wrap {
+        th,
+        td,
+        td.num,
+        .gi-pill {
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
     }
 }
 

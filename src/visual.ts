@@ -22,7 +22,7 @@ interface Style {
     pillColor: string; pillBg: string; good: string; bad: string; neutral: string;
     fontFamily: string; fontSize: number; headerSize: number;
     textColor: string; valueColor: string; groupColor: string;
-    deltaColumnCount: number; hideEmptyColumns: boolean; sortByGroup: boolean;
+    deltaColumnCount: number; hideEmptyColumns: boolean; sortByGroup: boolean; wrapText: boolean;
     heatmap: boolean; heatmapCenter: number; heatmapLow: string; heatmapMid: string; heatmapHigh: string;
 }
 const DEFAULTS: Style = {
@@ -30,7 +30,7 @@ const DEFAULTS: Style = {
     pillColor: "#016C8D", pillBg: "#e7f1f4", good: "#0F7A2C", bad: "#9E2F24", neutral: "#605E5C",
     fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 12, headerSize: 10,
     textColor: "#252423", valueColor: "#023864", groupColor: "#023864",
-    deltaColumnCount: 1, hideEmptyColumns: false, sortByGroup: false,
+    deltaColumnCount: 1, hideEmptyColumns: false, sortByGroup: false, wrapText: false,
     heatmap: false, heatmapCenter: 1, heatmapLow: "#2C7FB8", heatmapMid: "#FFFFFF", heatmapHigh: "#E8843C",
 };
 
@@ -137,6 +137,7 @@ export class Visual implements IVisual {
                 deltaColumnCount: num(o, "deltaColumnCount", DEFAULTS.deltaColumnCount, 0, 20),
                 hideEmptyColumns: (o?.["hideEmptyColumns"] as boolean) ?? DEFAULTS.hideEmptyColumns,
                 sortByGroup: (o?.["sortByGroup"] as boolean) ?? DEFAULTS.sortByGroup,
+                wrapText: (o?.["wrapText"] as boolean) ?? DEFAULTS.wrapText,
                 heatmap: (o?.["heatmap"] as boolean) ?? DEFAULTS.heatmap,
                 heatmapCenter: (o?.["heatmapCenter"] as number) ?? DEFAULTS.heatmapCenter,
                 heatmapLow: fill(o, "heatmapLow", DEFAULTS.heatmapLow),
@@ -154,10 +155,19 @@ export class Visual implements IVisual {
                 s.good = fore; s.bad = fore; s.neutral = fore;
                 s.textColor = fore; s.valueColor = fore; s.groupColor = fore;
                 s.heatmap = false;
+                // The scrollbar follows the palette too, so the scroll affordance required
+                // by policy 1180.2.2 stays visible under an accessibility theme.
+                this.root.style.setProperty("--gi-scrollbar-thumb", fore);
+                this.root.style.setProperty("--gi-scrollbar-track", back);
+            } else {
+                this.root.style.removeProperty("--gi-scrollbar-thumb");
+                this.root.style.removeProperty("--gi-scrollbar-track");
             }
 
             this.accent = s.accent;
             this.lastS = s;
+            // Wrap mode: headers and cells break onto further lines instead of scrolling sideways.
+            this.root.classList.toggle("wrap", s.wrapText);
             // Font family and body colour apply to the whole table so every cell inherits them.
             this.root.style.fontFamily = s.fontFamily;
             this.root.style.color = s.textColor;
@@ -474,7 +484,8 @@ export class Visual implements IVisual {
                         slices: [
                             this.numSlice("tDeltaCols", "Delta columns (from right)", "deltaColumnCount", s.deltaColumnCount, 0, 20),
                             this.toggleSlice("tHideEmpty", "Hide empty columns", "hideEmptyColumns", s.hideEmptyColumns),
-                            this.toggleSlice("tSortByGroup", "Sort by group name", "sortByGroup", s.sortByGroup)
+                            this.toggleSlice("tSortByGroup", "Sort by group name", "sortByGroup", s.sortByGroup),
+                            this.toggleSlice("tWrapText", "Wrap text", "wrapText", s.wrapText)
                         ]
                     }]
                 },

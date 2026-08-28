@@ -135,6 +135,11 @@
                         "bool": true
                     }
                 },
+                "wrapText": {
+                    "type": {
+                        "bool": true
+                    }
+                },
                 "heatmap": {
                     "type": {
                         "bool": true

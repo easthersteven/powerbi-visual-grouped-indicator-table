@@ -78,9 +78,18 @@ hardcoded in `style/visual.less`.
 All 23 declared properties are now returned from `getFormattingModel`, and a unit test
 asserts that, so it cannot regress silently.
 
-## Current state (27 August 2026)
+## Current state (28 August 2026)
 
 **Submitted 27 August 2026 at 1.2.0.0. Awaiting review outcome.**
+
+**1.3.0.0 is built ahead on `main`, not submitted.** It pre-empts the resize finding the
+reviewer raised against Accent KPI Card on 27 August 2026 (1180.2.2: overlay scrollbars on
+WebView2 paint nothing, so a shrunken visual looks clipped) by styling the scrollbars so a
+visible bar renders whenever content overflows, and adds a Wrap text toggle (Format pane >
+Layout). The sample .pbix on `main` embeds 1.3.0.0. **The `certification` branch stays at
+1.2.0.0 until this review completes** - it must match the package under review. If the
+review fails 1180.2.2, resubmit 1.3.0.0 (both slots together) and push
+`main:certification`; if it passes, 1.3.0.0 ships as a normal update later.
 
 **What went up:** `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.2.0.0.pbiviz` and `store/grouped-indicator-table-sample.pbix`, uploaded together on the Technical
 configuration page, with the reviewer notes from `store/listing.md` pasted into Notes for
