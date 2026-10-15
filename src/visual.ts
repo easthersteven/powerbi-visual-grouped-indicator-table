@@ -54,6 +54,15 @@ function text(o: Record<string, unknown> | undefined, k: string, d: string): str
     return typeof t === "string" && t !== "" ? t : d;
 }
 const hasAlpha = (v: PrimitiveValue | undefined) => /[A-Za-z]/.test(String(v ?? ""));
+// One shared collator: String.localeCompare can build a new one per call, which made sorting
+// a large table (thousands of comparisons) needlessly slow. Same ordering as localeCompare.
+const collator = new Intl.Collator();
+// VisualUpdateType flags (a const enum in the API typings, so spelled out here):
+// Resize = 4, ResizeEnd = 32. An update carrying only these needs no re-render.
+const RESIZE_FLAGS = 4 | 32;
+
+// What a rendered row needs for its tooltip and selection, looked up by the delegated handlers.
+interface RowInfo { ri: number; gkey: string; }
 
 export class Visual implements IVisual {
     private host: IVisualHost;
@@ -68,6 +77,16 @@ export class Visual implements IVisual {
     // Mirrors the last rendered settings so getFormattingModel shows what the table is
     // actually displaying, including the defaults applied when a property is unset.
     private lastS: Style = { ...DEFAULTS };
+    // State of the last render, read by the row event handlers. Row listeners are delegated
+    // to the root (one set, attached once) rather than five closures per row per update.
+    private table: DataViewTable | undefined;
+    private display: { index: number; name: string }[] = [];
+    private rowInfo: RowInfo[] = [];
+    private groups = new Map<string, number[]>();
+    // Selection ids are built on first use (hover or click) per group, not for every row on
+    // every update - after a filter only the groups the user touches pay for them.
+    private groupIds = new Map<string, powerbi.extensibility.ISelectionId[]>();
+    private rendered = false;
 
     constructor(options: VisualConstructorOptions) {
         this.host = options.host;
@@ -78,16 +97,91 @@ export class Visual implements IVisual {
         this.localization = options.host.createLocalizationManager?.();
         this.root = options.element;
         this.root.classList.add("gi-table-root");
-        this.root.addEventListener("click", () => {
+        this.root.addEventListener("click", (ev) => {
+            const row = this.rowOf(ev);
+            if (row) { this.selectGroup(row.gkey, ev.ctrlKey || ev.metaKey); return; }
             // Clicking empty space clears the selection - but not when the report author
             // has turned this visual's interactions off (Edit interactions).
             if (this.host.hostCapabilities?.allowInteractions === false) return;
             this.selectionManager.clear(); this.selectedKeys.clear(); this.applySel();
         });
         this.root.addEventListener("contextmenu", (ev) => {
-            this.selectionManager.showContextMenu({} as unknown as powerbi.visuals.ISelectionId, { x: ev.clientX, y: ev.clientY });
+            const row = this.rowOf(ev);
             ev.preventDefault();
+            if (row) {
+                this.selectionManager.showContextMenu(this.idsFor(row.gkey)[0] ?? ({} as unknown as powerbi.visuals.ISelectionId), { x: ev.clientX, y: ev.clientY });
+                return;
+            }
+            this.selectionManager.showContextMenu({} as unknown as powerbi.visuals.ISelectionId, { x: ev.clientX, y: ev.clientY });
         });
+        this.root.addEventListener("keydown", (ev: KeyboardEvent) => {
+            const row = this.rowOf(ev);
+            if (!row || (ev.key !== "Enter" && ev.key !== " ")) return;
+            ev.preventDefault();
+            this.selectGroup(row.gkey, ev.ctrlKey || ev.metaKey);
+        });
+        // Host tooltip: the whole row, column by column. Touch devices get the same tooltip
+        // from a tap (pointerdown) - mousemove never fires there.
+        this.root.addEventListener("mousemove", (ev) => { const row = this.rowOf(ev); if (row) this.showTip(row, ev, false); });
+        this.root.addEventListener("pointerdown", (ev: PointerEvent) => {
+            const row = this.rowOf(ev);
+            if (row && ev.pointerType === "touch") this.showTip(row, ev, true);
+        });
+        // mouseleave does not bubble, but a capturing listener still sees it for each row.
+        this.root.addEventListener("mouseleave", (ev) => {
+            if ((ev.target as HTMLElement)?.dataset?.ri !== undefined) this.tooltipService?.hide({ immediately: true, isTouchEvent: false });
+        }, true);
+    }
+
+    // The rendered row an event happened in, if any.
+    private rowOf(ev: Event): RowInfo | undefined {
+        const tr = (ev.target as HTMLElement)?.closest?.("tr[data-ri]") as HTMLElement | null;
+        return tr && this.root.contains(tr) ? this.rowInfo[Number(tr.dataset.ri)] : undefined;
+    }
+
+    private idsFor(gkey: string): powerbi.extensibility.ISelectionId[] {
+        let ids = this.groupIds.get(gkey);
+        if (!ids) {
+            ids = [];
+            for (const gri of this.groups.get(gkey) ?? []) {
+                try { ids.push(this.host.createSelectionIdBuilder().withTable(this.table!, gri).createSelectionId()); } catch { /* ignore */ }
+            }
+            this.groupIds.set(gkey, ids);
+        }
+        return ids;
+    }
+
+    private showTip(row: RowInfo, ev: MouseEvent, isTouch: boolean): void {
+        const table = this.table; if (!table) return;
+        const rect = this.root.getBoundingClientRect();
+        const ids = this.idsFor(row.gkey);
+        this.tooltipService?.show({
+            coordinates: [ev.clientX - rect.left, ev.clientY - rect.top],
+            isTouchEvent: isTouch,
+            dataItems: this.display.map((c) => ({
+                displayName: c.name || String(c.index),
+                value: String(table.rows[row.ri][c.index] ?? ""),
+            })),
+            identities: ids.length ? [ids[0]] : [],
+        });
+    }
+
+    // Group selection: clicking any row selects the whole group -> cross-filters the page.
+    private selectGroup(gkey: string, multi: boolean): void {
+        // Honour the report's Edit interactions setting.
+        if (this.host.hostCapabilities?.allowInteractions === false) return;
+        const isOnly = !multi && this.selectedKeys.size === 1 && this.selectedKeys.has(gkey);
+        const after = () => {
+            if (multi) { if (this.selectedKeys.has(gkey)) this.selectedKeys.delete(gkey); else this.selectedKeys.add(gkey); }
+            else { this.selectedKeys.clear(); if (!isOnly) this.selectedKeys.add(gkey); }
+            this.applySel();
+        };
+        try {
+            const ids = this.idsFor(gkey);
+            if (!ids.length) { after(); return; }
+            if (isOnly) this.selectionManager.clear().then(after);
+            else this.selectionManager.select(ids, multi).then(after);
+        } catch { after(); }
     }
 
     // Localized string with the English text as the fallback.
@@ -118,6 +212,13 @@ export class Visual implements IVisual {
             const vp = options.viewport;
             if (vp) { this.root.style.width = vp.width + "px"; this.root.style.height = vp.height + "px"; }
             this.root.style.overflow = "auto";
+            // Resizing (dragging the visual, Focus mode) changes nothing in the table itself:
+            // keep the rendered DOM instead of rebuilding every row.
+            if (this.rendered && options.type && (options.type & ~RESIZE_FLAGS) === 0) {
+                this.events.renderingFinished(options);
+                return;
+            }
+            this.rendered = false;
             while (this.root.firstChild) this.root.removeChild(this.root.firstChild);
             const dv: DataView = options.dataViews?.[0];
             const table: DataViewTable | undefined = dv?.table;
@@ -240,7 +341,9 @@ export class Visual implements IVisual {
                 const sk = (i: number) => s.sortByGroup
                     ? String(table.rows[i][gi] ?? "") + "~~" + keyOf(i)             // stable order by the group column first
                     : keyOf(i) + "~~" + String(table.rows[i][gi] ?? "");
-                rowIdx.sort((a, b) => sk(a).localeCompare(sk(b)));                  // contiguous groups, stable inner order
+                const keys: string[] = [];
+                for (const i of rowIdx) keys[i] = sk(i);                            // built once, not per comparison
+                rowIdx.sort((a, b) => collator.compare(keys[a], keys[b]));          // contiguous groups, stable inner order
             } else {
                 keyOf = (i) => (groupCol ? String(table.rows[i][groupCol.index] ?? "") : String(i));
             }
@@ -272,19 +375,19 @@ export class Visual implements IVisual {
             thead.appendChild(htr); tbl.appendChild(thead);
 
             const tbody = el("tbody");
+            const rowInfo: RowInfo[] = [];
             order.forEach((gkey, gi) => {
                 const rowIdxs = groups.get(gkey)!;
                 // Even groups are plain white - except in high contrast, where every row
                 // takes the host background so text never lands on hard-coded white.
                 const groupBg = gi % 2 === 1 || hc ? s.rowAltBg : "#FFFFFF";
                 const direction = dirCol ? String(table.rows[rowIdxs[0]][dirCol.index] ?? "") : "";
-                // group selection: clicking any row selects the whole group -> cross-filters the page
-                const groupIds: powerbi.extensibility.ISelectionId[] = [];
-                for (const gri of rowIdxs) { try { groupIds.push(this.host.createSelectionIdBuilder().withTable(table, gri).createSelectionId()); } catch { /* ignore */ } }
 
                 rowIdxs.forEach((ri, j) => {
                     const tr = el("tr") as HTMLTableRowElement;
                     tr.dataset.gkey = gkey;
+                    tr.dataset.ri = String(rowInfo.length);
+                    rowInfo.push({ ri, gkey });
                     tr.style.background = groupBg;
                     if (j === 0) tr.classList.add("grp-first");
 
@@ -321,60 +424,14 @@ export class Visual implements IVisual {
                     tr.tabIndex = 0;
                     tr.setAttribute("role", "row");
 
-                    // Host tooltip: the whole row, column by column. Touch devices get the
-                    // same tooltip from a tap (pointerdown) - mousemove never fires there.
-                    const showTip = (ev: MouseEvent, isTouch: boolean) => {
-                        const rect = this.root.getBoundingClientRect();
-                        this.tooltipService?.show({
-                            coordinates: [ev.clientX - rect.left, ev.clientY - rect.top],
-                            isTouchEvent: isTouch,
-                            dataItems: display.map((c) => ({
-                                displayName: c.name || String(c.index),
-                                value: String(table.rows[ri][c.index] ?? ""),
-                            })),
-                            identities: groupIds.length ? [groupIds[0]] : [],
-                        });
-                    };
-                    tr.addEventListener("mousemove", (ev) => showTip(ev, false));
-                    tr.addEventListener("pointerdown", (ev: PointerEvent) => { if (ev.pointerType === "touch") showTip(ev, true); });
-                    tr.addEventListener("mouseleave", () => this.tooltipService?.hide({ immediately: true, isTouchEvent: false }));
-
-                    tr.addEventListener("keydown", (ev: KeyboardEvent) => {
-                        if (ev.key !== "Enter" && ev.key !== " ") return;
-                        ev.preventDefault();
-                        selectGroup(ev.ctrlKey || ev.metaKey);
-                    });
-
-                    const selectGroup = (multi: boolean) => {
-                        // Honour the report's Edit interactions setting.
-                        if (this.host.hostCapabilities?.allowInteractions === false) return;
-                        const isOnly = !multi && this.selectedKeys.size === 1 && this.selectedKeys.has(gkey);
-                        const after = () => {
-                            if (multi) { this.selectedKeys.has(gkey) ? this.selectedKeys.delete(gkey) : this.selectedKeys.add(gkey); }
-                            else { this.selectedKeys.clear(); if (!isOnly) this.selectedKeys.add(gkey); }
-                            this.applySel();
-                        };
-                        try {
-                            if (!groupIds.length) { after(); return; }
-                            if (isOnly) this.selectionManager.clear().then(after);
-                            else this.selectionManager.select(groupIds, multi).then(after);
-                        } catch { after(); }
-                    };
-
-                    tr.addEventListener("click", (ev) => {
-                        ev.stopPropagation();
-                        selectGroup(ev.ctrlKey || ev.metaKey);
-                    });
-                    tr.addEventListener("contextmenu", (ev) => {
-                        ev.preventDefault();
-                        ev.stopPropagation();
-                        this.selectionManager.showContextMenu(groupIds[0] ?? ({} as unknown as powerbi.visuals.ISelectionId), { x: ev.clientX, y: ev.clientY });
-                    });
                     tbody.appendChild(tr);
                 });
             });
             tbl.appendChild(tbody);
             this.root.appendChild(tbl);
+            this.table = table; this.display = display; this.rowInfo = rowInfo;
+            this.groups = groups; this.groupIds.clear();
+            this.rendered = true;
             this.applySel();
             this.events.renderingFinished(options);
         } catch (e) { this.events.renderingFailed(options, String(e)); }

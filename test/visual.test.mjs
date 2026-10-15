@@ -280,8 +280,36 @@ test("shows a row tooltip listing every displayed column (1180.2.2.2)", () => {
     row.dispatchEvent(new dom.window.MouseEvent("mousemove", { clientX: 4, clientY: 4, bubbles: true }));
     assert.equal(captured.tooltips.length, 1);
     assert.ok(captured.tooltips[0].dataItems.length > 0, "tooltip lists the row's columns");
-    row.dispatchEvent(new dom.window.MouseEvent("mouseleave", { bubbles: true }));
+    // mouseleave does not bubble in a browser; the delegated handler must still see it
+    row.dispatchEvent(new dom.window.MouseEvent("mouseleave"));
     assert.ok(captured.tooltipHides > 0);
+});
+
+test("resize-only updates keep the rendered table instead of rebuilding it", () => {
+    const { visual, element, captured } = makeVisual();
+    update(visual, sampleColumns(), sampleRows());
+    const tbl = element.querySelector("table");
+    visual.update({ type: 4, viewport: { width: 500, height: 300 }, dataViews: [{ metadata: {}, table: { columns: sampleColumns(), rows: sampleRows() } }] });
+    assert.equal(element.querySelector("table"), tbl, "Resize must not rebuild the DOM");
+    assert.equal(element.style.width, "500px");
+    assert.deepEqual(captured.events.slice(-2), ["started", "finished"]);
+    visual.update({ type: 2, viewport: { width: 500, height: 300 }, dataViews: [{ metadata: {}, table: { columns: sampleColumns(), rows: [sampleRows()[0]] } }] });
+    assert.notEqual(element.querySelector("table"), tbl, "a Data update (filter) re-renders");
+    assert.equal(element.querySelectorAll("tbody tr").length, 1);
+});
+
+test("selection ids are built only for the group the user interacts with", () => {
+    const { visual, element, captured } = makeVisual();
+    let built = 0;
+    visual.host.createSelectionIdBuilder = () => ({ withTable: () => ({ createSelectionId: () => ({ n: ++built }) }) });
+    const rows = Array.from({ length: 50 }, (_, i) => ["C" + i, "Name " + i, i, "▲ 1", "up"]);
+    update(visual, sampleColumns(), rows);
+    assert.equal(built, 0, "a filter update should not build ids for every row");
+    const tr = element.querySelectorAll("tbody tr")[3];
+    tr.querySelector("td").dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true }));
+    assert.equal(built, 1);
+    assert.equal(captured.selections.length, 1);
+    assert.equal(tr.classList.contains("sel"), false, "selection applies after the host resolves");
 });
 
 test("keyboard: rows are focusable and Enter selects the group (1180.2.2.3)", () => {

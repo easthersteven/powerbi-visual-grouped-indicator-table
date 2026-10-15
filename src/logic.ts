@@ -14,6 +14,15 @@ export function toNum(v: PrimitiveValue): number | null {
     return hasPct ? n / 100 : n;
 }
 
+// Number.toLocaleString with options builds a fresh Intl.NumberFormat on every call, which
+// dominated render time on large tables; one cached formatter per decimal count is reused.
+const numberFormats = new Map<number, Intl.NumberFormat>();
+function numberFormat(dec: number): Intl.NumberFormat {
+    let nf = numberFormats.get(dec);
+    if (!nf) { nf = new Intl.NumberFormat(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec }); numberFormats.set(dec, nf); }
+    return nf;
+}
+
 // Format a numeric raw value using a Power BI-style format string (so 1.25 -> "125%").
 // Strings pass through unchanged (a measure may already return formatted text).
 export function fmtNum(raw: PrimitiveValue, fmt: string | undefined): string {
@@ -24,7 +33,7 @@ export function fmtNum(raw: PrimitiveValue, fmt: string | undefined): string {
         return (raw * 100).toFixed(dec) + "%";
     }
     const dec = f.indexOf(".") >= 0 ? (f.split(".")[1] || "").replace(/[^0#]/g, "").length : 0;
-    return raw.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    return numberFormat(dec).format(raw);
 }
 
 export function hex(h: string): number[] {

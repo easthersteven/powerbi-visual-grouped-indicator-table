@@ -6,6 +6,16 @@ Built on main while the 1.2.0.0 review is in flight; not yet submitted. Pre-empt
 resize finding raised against Accent KPI Card on 27 August 2026, which this visual shares
 the mechanics of.
 
+- **Faster response to filters and slicers.** Each filter re-renders the table (up to 2,000
+  rows), and that render did avoidable work: every number cell built a new
+  `Intl.NumberFormat` (via `toLocaleString` with options), merge-mode sorting rebuilt its
+  sort keys and a collator on every comparison, every row got five event listeners, and a
+  selection id was created for every row up front. Formatters and the collator are now
+  cached, sort keys are computed once, row events are handled by one set of delegated
+  listeners on the root, and selection ids are built only for a group the user hovers or
+  clicks. Resize-only updates no longer rebuild the table at all. Rendered output is
+  unchanged. In Chromium on a 2,000-row, 11-column table, script time per filter roughly
+  halved and resizes went from ~250 ms to ~40 ms.
 - **Visible scroll bars.** The root was already `overflow: auto`, but on hosts with overlay
   scrollbars (WebView2 with Windows' "automatically hide scroll bars" default - Power BI
   Desktop) the bar occupies no layout space and paints nothing until the user scrolls, so a
