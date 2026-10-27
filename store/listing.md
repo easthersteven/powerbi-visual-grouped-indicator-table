@@ -56,7 +56,7 @@ Works well for KPI registers, programme scorecards, control and compliance regis
 
 ```text
 Grouped Indicator Table 1.4.0.0
-Supersedes 1.3.0.0.
+Supersedes 1.3.0.0, the version AppSource currently serves for this GUID (verified 27 October 2026 against pbivisuals.powerbi.com).
 
 SOURCE AND BUILD
 Repository: https://github.com/easthersteven/powerbi-visual-grouped-indicator-table
