@@ -1,10 +1,9 @@
 # Changelog
 
-## 1.3.0.0 (2026-08-28)
+## 1.4.0.0 (2026-10-27)
 
-Built on main while the 1.2.0.0 review is in flight; not yet submitted. Pre-empts the
-resize finding raised against Accent KPI Card on 27 August 2026, which this visual shares
-the mechanics of.
+Performance release, built on main; not yet submitted. What the table shows and how it
+behaves is unchanged - every change is in how fast it gets there.
 
 - **Faster response to filters and slicers.** Each filter re-renders the table (up to 2,000
   rows), and that render did avoidable work: every number cell built a new
@@ -16,6 +15,17 @@ the mechanics of.
   clicks. Resize-only updates no longer rebuild the table at all. Rendered output is
   unchanged. In Chromium on a 2,000-row, 11-column table, script time per filter roughly
   halved and resizes went from ~250 ms to ~40 ms.
+- **Resize-only updates keep the table.** An update carrying only the Resize / ResizeEnd
+  flags applies the new viewport size (and the inline `overflow: auto`) to the existing
+  table instead of rebuilding every row. Data, Style and ViewMode updates re-render as
+  before, and the rendering events still fire on every update.
+
+## 1.3.0.0 (2026-08-28)
+
+Built on main while the 1.2.0.0 review is in flight; not yet submitted. Pre-empts the
+resize finding raised against Accent KPI Card on 27 August 2026, which this visual shares
+the mechanics of.
+
 - **Visible scroll bars.** The root was already `overflow: auto`, but on hosts with overlay
   scrollbars (WebView2 with Windows' "automatically hide scroll bars" default - Power BI
   Desktop) the bar occupies no layout space and paints nothing until the user scrolls, so a

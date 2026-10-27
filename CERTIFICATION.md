@@ -78,6 +78,33 @@ hardcoded in `style/visual.less`.
 All 25 declared properties are now returned from `getFormattingModel`, and a unit test
 asserts that, so it cannot regress silently.
 
+## 1.4.0.0 - performance (27 October 2026)
+
+Render speed only; what the table shows and how it behaves is unchanged. Merged from
+`claude/dashboard-filter-performance-mhstbu` (implementation and tests) and
+`perf/faster-interaction` (version bump and these notes).
+
+- Resize-only updates (`VisualUpdateType` Resize = 4 / ResizeEnd = 32 and nothing else) keep the
+  rendered table. The new viewport size and the inline `overflow: auto` are still applied first,
+  and `renderingStarted` / `renderingFinished` still fire on every update (export and the
+  rendering-events check depend on it). Any update carrying Data, Style or ViewMode re-renders
+  as before.
+- Number formatting reuses one `Intl.NumberFormat` per decimal count instead of `toLocaleString`
+  per cell; merge-mode sorting builds its keys once and compares with one shared `Intl.Collator`.
+  Output is identical (logic tests pass unchanged).
+- Row tooltips, selection, Ctrl/Cmd multi-select, Enter/Space activation and the context menu
+  are handled by one set of listeners on the root element, attached once in the constructor,
+  instead of five per row per render. Rows stay focusable (`tabIndex = 0`, `role="row"`), the
+  Edit interactions guard is unchanged, and touch tooltips still use `pointerdown`.
+- Selection ids are built on first hover or click per group rather than for every row on
+  every update.
+
+Policy impact checked against the audit table above: resize (1180.2.2) still scrolls - the root
+keeps inline `overflow: auto` and a resize never empties the visual; tooltips (1180.2.2.2),
+filter out (1180.2.2.3), keyboard navigation, Edit interactions and high contrast are unchanged
+in behaviour and covered by the existing tests plus three new ones (resize keeps the DOM, lazy
+selection ids, delegated tooltip hide). No new privileges, network access or capabilities.
+
 ## Current state (28 August 2026)
 
 **Submitted 27 August 2026 at 1.2.0.0. Awaiting review outcome.**
