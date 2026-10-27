@@ -55,7 +55,7 @@ in "Testing submissions of Power BI custom visuals".
 | Landing page when nothing is bound | **Fixed** - explains what to bind |
 | Localization | **Fixed** - `stringResources` and the host localization manager |
 | Bookmarks | Pass |
-| Sample .pbix embeds the submitted visual version (1180.2.3) | **Fixed** - sample embeds 1.3.0.0, matching `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.3.0.0.pbiviz` |
+| Sample .pbix embeds the submitted visual version (1180.2.3) | **Fixed** - sample embeds 1.4.0.0, byte-identical to `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.4.0.0.pbiviz` |
 | No external services; `privileges: []` | Pass - certification audit reports no external requests |
 
 `pbiviz package --certification-audit` reports no external requests. It also lists 8
@@ -105,7 +105,32 @@ filter out (1180.2.2.3), keyboard navigation, Edit interactions and high contras
 in behaviour and covered by the existing tests plus three new ones (resize keeps the DOM, lazy
 selection ids, delegated tooltip hide). No new privileges, network access or capabilities.
 
-## Current state (28 August 2026)
+## Current state (27 October 2026)
+
+**1.4.0.0 is built, verified and pushed to `main` and `certification` together; not yet
+submitted.** It is the performance release described above - nothing visible changed. The
+last submission recorded here is 1.2.0.0 on 27 August 2026; 1.3.0.0 was pushed on 28 August
+2026 and whether it was uploaded is not recorded - check Partner Center before assuming.
+
+**To upload, together, on the Technical configuration page:**
+`dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.4.0.0.pbiviz` and
+`store/grouped-indicator-table-sample.pbix`, with the reviewer notes from `store/listing.md`
+pasted into Notes for certification on Review and publish.
+
+**Sample file:** the Power BI Desktop save of 29 August 2026 with its two embedded visual parts
+(`Report/CustomVisuals/<guid>/package.json` and `resources/<guid>.pbiviz.json`) replaced by the
+1.4.0.0 `--certification-audit` build, byte-identical to `dist/`. Nothing under
+`Report/definition/` was touched (SecurityBindings covers it) and `report.json` carries no
+`publicCustomVisuals`. Open it once in Desktop before uploading. The model is import-mode with
+inline sample data, so it opens offline with no data sources, connectors or credentials.
+
+**Verified at 1.4.0.0 (27 October 2026):** npm audit 0 vulnerabilities (after `npm audit fix`
+on dev dependencies; the built bundle is byte-identical before and after); ESLint clean; 39
+tests passing at 97% statement coverage; `pbiviz package --certification-audit` reports no
+external requests. It also lists 8 optional features - the informational extras described
+above, not failures.
+
+## State at 28 August 2026
 
 **Submitted 27 August 2026 at 1.2.0.0. Awaiting review outcome.**
 

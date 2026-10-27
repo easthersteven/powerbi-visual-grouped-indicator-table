@@ -43,8 +43,8 @@ Works well for KPI registers, programme scorecards, control and compliance regis
 - Support document link: https://github.com/easthersteven/powerbi-visual-grouped-indicator-table/blob/main/SUPPORT.md
 
 **Technical configuration page:**
-- PBIVIZ package: `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.3.0.0.pbiviz`
-  (full path: `C:\Users\se518\powerbi-visuals\powerbi-visual-grouped-indicator-table\dist\groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.3.0.0.pbiviz`)
+- PBIVIZ package: `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.4.0.0.pbiviz`
+  (full path: `C:\Users\se518\powerbi-visuals\powerbi-visual-grouped-indicator-table\dist\groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.4.0.0.pbiviz`)
 - Sample PBIX: `store/grouped-indicator-table-sample.pbix` - must open offline with no external
   connections, embed its own sample data, and use this exact visual version.
 
@@ -55,8 +55,8 @@ Works well for KPI registers, programme scorecards, control and compliance regis
    line so it pastes without re-wrapping.
 
 ```text
-Grouped Indicator Table 1.3.0.0
-Supersedes 1.2.0.0, submitted 27 August 2026.
+Grouped Indicator Table 1.4.0.0
+Supersedes 1.3.0.0.
 
 SOURCE AND BUILD
 Repository: https://github.com/easthersteven/powerbi-visual-grouped-indicator-table
@@ -69,6 +69,9 @@ WHAT THE VISUAL DOES
 A table whose rows are collected into groups, with the shared group cell merged down the left. Delta columns are coloured good, bad or neutral from the leading arrow character and a per-group direction field, so a falling defect count reads green. Clicking a row cross-filters the page by that group; Ctrl+click multi-selects and clicking empty space clears. An optional heatmap shades numeric cells around a configurable centre.
 
 CHANGES IN THIS VERSION
+Performance only; nothing the table shows or does has changed. Each filter or slicer change re-renders the table, and that render now avoids repeated work: number formatters and the sort collator are cached, sort keys are computed once, row tooltips, selection, keyboard activation and the context menu are handled by one set of listeners on the root element rather than five per row, and selection ids are built only for the group the user hovers or clicks. Updates that carry only a resize keep the rendered table and apply the new viewport size and scroll bars to it, so dragging the visual no longer rebuilds every row. Rendering events still fire on every update, the root keeps its inline overflow:auto and styled scroll bars, and tooltips, outward filtering, keyboard navigation, Edit interactions and high contrast behave exactly as in 1.3.0.0; three new unit tests pin the resize path, the lazy selection ids and the delegated tooltip hide.
+
+INCLUDED SINCE 1.3.0.0
 Scroll bars are now explicitly styled with ::-webkit-scrollbar rules, so a persistent thin bar with a visible track renders whenever content overflows, vertically and horizontally, even on hosts whose overlay scrollbars paint nothing until scrolled (WebView2 with Windows' "automatically hide scroll bars" default); the standard scrollbar-width/scrollbar-color properties are served to Firefox only, where those rules do not exist. Under high contrast the scrollbar takes its colours from the host palette, every row takes the host background, and the tinted hover/selection backgrounds are suppressed. A new Wrap text toggle (Format pane, Layout) wraps headers and cells onto further lines instead of scrolling sideways. Tooltips also show from a tap on touch devices, and clicking empty space no longer clears the selection when the report's Edit interactions setting has this visual's interactions off. The supportsHighlight declaration was removed - a table data mapping cannot receive highlights, and the previous claim that it did was incorrect.
 
 CARRIED OVER FROM 1.2.0.0
@@ -78,14 +81,20 @@ HOST BEHAVIOUR AND ACCESSIBILITY
 The root container is overflow:auto with explicitly styled scroll bars, so the table gains visible scroll bars rather than clipping when the host shrinks it. Hovering a row shows it column by column through the host tooltip service; on touch devices a tap shows the same tooltip. High contrast mode takes every colour from the host palette and drops the heatmap, which carries no meaning in a two-colour theme. Rows are focusable and Enter or Space selects them; supportsKeyboardFocus is declared. Honours the report's Edit interactions setting for both selecting and clearing, responds to cross-filtering from other visuals through the filtered dataView, and supports the Rendering Events API and context menus. Strings are localised through stringResources and the host localization manager, and a landing page explains the visual when nothing is bound.
 
 SECURITY AND PRIVACY
-No external services and no network calls of any kind; no data leaves the report. capabilities.json declares "privileges": []. pbiviz package --certification-audit reports no external requests. npm audit reports 0 vulnerabilities. 37 unit tests pass.
+No external services and no network calls of any kind; no data leaves the report. capabilities.json declares "privileges": []. pbiviz package --certification-audit reports no external requests. npm audit reports 0 vulnerabilities. 39 unit tests pass.
 
 SAMPLE FILE
-grouped-indicator-table-sample.pbix opens offline: the model is import-mode with inline sample data, with no data sources, connectors or credentials. It embeds visual version 1.3.0.0, matching the .pbiviz above. Page 1 shows the visual with a native table over the same data on the same page, so cross-filtering from a row click is visible. Page 2 documents the field bindings and settings.
+grouped-indicator-table-sample.pbix opens offline: the model is import-mode with inline sample data, with no data sources, connectors or credentials. It embeds visual version 1.4.0.0, matching the .pbiviz above. Page 1 shows the visual with a native table over the same data on the same page, so cross-filtering from a row click is visible. Page 2 documents the field bindings and settings.
 ```
 
-**Pre-publish checks - passed 28 Aug 2026 (v1.3.0.0), not submitted:** npm audit 0
-vulnerabilities; eslint clean; 37 unit tests pass; certification audit found no external
-requests. `main` and `certification` are pushed together at 1.3.0.0 for the offer
-update. Before submitting: open `store/grouped-indicator-table-sample.pbix` once in
-Power BI Desktop to confirm it renders, then upload both slots together.
+**Pre-publish checks - passed 27 Oct 2026 (v1.4.0.0), not submitted:** npm audit 0
+vulnerabilities (after `npm audit fix` on dev dependencies only - the built bundle is
+byte-identical before and after); eslint clean; 39 unit tests pass at 97% statement
+coverage; certification audit found no external requests. The sample .pbix is the Power BI
+Desktop save of 29 Aug 2026 with its two embedded visual parts replaced by the 1.4.0.0
+`--certification-audit` build, so the embedded resource is byte-identical to `dist/` (a
+plain `pbiviz package` minifies differently, so always build with that flag). `main` and
+`certification` are pushed together at 1.4.0.0. Before submitting: open
+`store/grouped-indicator-table-sample.pbix` once in Power BI Desktop to confirm it renders
+(turn on Developer mode for the session first to see 1.4.0.0 rather than the AppSource
+copy), then upload both slots together.
