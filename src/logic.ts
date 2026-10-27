@@ -24,7 +24,20 @@ export function fmtNum(raw: PrimitiveValue, fmt: string | undefined): string {
         return (raw * 100).toFixed(dec) + "%";
     }
     const dec = f.indexOf(".") >= 0 ? (f.split(".")[1] || "").replace(/[^0#]/g, "").length : 0;
-    return raw.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    return numberFormat(dec).format(raw);
+}
+
+// toLocaleString(locale, options) builds a fresh Intl.NumberFormat on every call, which
+// dominates render time on a large table. One formatter per decimal count gives the
+// same output.
+const formatters = new Map<number, Intl.NumberFormat>();
+function numberFormat(dec: number): Intl.NumberFormat {
+    let f = formatters.get(dec);
+    if (!f) {
+        f = new Intl.NumberFormat(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec });
+        formatters.set(dec, f);
+    }
+    return f;
 }
 
 export function hex(h: string): number[] {

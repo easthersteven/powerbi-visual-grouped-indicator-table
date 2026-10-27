@@ -118,6 +118,14 @@ export class Visual implements IVisual {
             const vp = options.viewport;
             if (vp) { this.root.style.width = vp.width + "px"; this.root.style.height = vp.height + "px"; }
             this.root.style.overflow = "auto";
+            // Resize-only updates (VisualUpdateType Resize = 4 / ResizeEnd = 32) carry no new
+            // data or formatting, so keep the rendered table and let the new size apply.
+            // Rebuilding every cell on each resize step is the costliest thing this visual does.
+            const RERENDER = 2 /* Data */ | 8 /* ViewMode */ | 16 /* Style */;
+            if (typeof options.type === "number" && (options.type & RERENDER) === 0 && this.root.querySelector("table.gi-table")) {
+                this.events.renderingFinished(options);
+                return;
+            }
             while (this.root.firstChild) this.root.removeChild(this.root.firstChild);
             const dv: DataView = options.dataViews?.[0];
             const table: DataViewTable | undefined = dv?.table;
@@ -272,6 +280,10 @@ export class Visual implements IVisual {
             thead.appendChild(htr); tbl.appendChild(thead);
 
             const tbody = el("tbody");
+            // Row behaviour (tooltip, selection, context menu, keyboard) is handled by one set of
+            // listeners on tbody that look the row up in `rowMeta`, instead of six listeners and
+            // closures per row.
+            const rowMeta: { ri: number; gkey: string; ids: powerbi.extensibility.ISelectionId[] }[] = [];
             order.forEach((gkey, gi) => {
                 const rowIdxs = groups.get(gkey)!;
                 // Even groups are plain white - except in high contrast, where every row
@@ -321,57 +333,65 @@ export class Visual implements IVisual {
                     tr.tabIndex = 0;
                     tr.setAttribute("role", "row");
 
-                    // Host tooltip: the whole row, column by column. Touch devices get the
-                    // same tooltip from a tap (pointerdown) - mousemove never fires there.
-                    const showTip = (ev: MouseEvent, isTouch: boolean) => {
-                        const rect = this.root.getBoundingClientRect();
-                        this.tooltipService?.show({
-                            coordinates: [ev.clientX - rect.left, ev.clientY - rect.top],
-                            isTouchEvent: isTouch,
-                            dataItems: display.map((c) => ({
-                                displayName: c.name || String(c.index),
-                                value: String(table.rows[ri][c.index] ?? ""),
-                            })),
-                            identities: groupIds.length ? [groupIds[0]] : [],
-                        });
-                    };
-                    tr.addEventListener("mousemove", (ev) => showTip(ev, false));
-                    tr.addEventListener("pointerdown", (ev: PointerEvent) => { if (ev.pointerType === "touch") showTip(ev, true); });
-                    tr.addEventListener("mouseleave", () => this.tooltipService?.hide({ immediately: true, isTouchEvent: false }));
-
-                    tr.addEventListener("keydown", (ev: KeyboardEvent) => {
-                        if (ev.key !== "Enter" && ev.key !== " ") return;
-                        ev.preventDefault();
-                        selectGroup(ev.ctrlKey || ev.metaKey);
-                    });
-
-                    const selectGroup = (multi: boolean) => {
-                        // Honour the report's Edit interactions setting.
-                        if (this.host.hostCapabilities?.allowInteractions === false) return;
-                        const isOnly = !multi && this.selectedKeys.size === 1 && this.selectedKeys.has(gkey);
-                        const after = () => {
-                            if (multi) { this.selectedKeys.has(gkey) ? this.selectedKeys.delete(gkey) : this.selectedKeys.add(gkey); }
-                            else { this.selectedKeys.clear(); if (!isOnly) this.selectedKeys.add(gkey); }
-                            this.applySel();
-                        };
-                        try {
-                            if (!groupIds.length) { after(); return; }
-                            if (isOnly) this.selectionManager.clear().then(after);
-                            else this.selectionManager.select(groupIds, multi).then(after);
-                        } catch { after(); }
-                    };
-
-                    tr.addEventListener("click", (ev) => {
-                        ev.stopPropagation();
-                        selectGroup(ev.ctrlKey || ev.metaKey);
-                    });
-                    tr.addEventListener("contextmenu", (ev) => {
-                        ev.preventDefault();
-                        ev.stopPropagation();
-                        this.selectionManager.showContextMenu(groupIds[0] ?? ({} as unknown as powerbi.visuals.ISelectionId), { x: ev.clientX, y: ev.clientY });
-                    });
+                    tr.dataset.mi = String(rowMeta.length);
+                    rowMeta.push({ ri, gkey, ids: groupIds });
                     tbody.appendChild(tr);
                 });
+            });
+
+            const metaOf = (ev: Event) => {
+                const tr = (ev.target as HTMLElement | null)?.closest?.("tr[data-mi]") as HTMLElement | null;
+                return tr ? rowMeta[Number(tr.dataset.mi)] : undefined;
+            };
+            // Host tooltip: the whole row, column by column. Touch devices get the
+            // same tooltip from a tap (pointerdown) - mousemove never fires there.
+            const showTip = (ev: MouseEvent, isTouch: boolean, m: { ri: number; ids: powerbi.extensibility.ISelectionId[] }) => {
+                const rect = this.root.getBoundingClientRect();
+                this.tooltipService?.show({
+                    coordinates: [ev.clientX - rect.left, ev.clientY - rect.top],
+                    isTouchEvent: isTouch,
+                    dataItems: display.map((c) => ({
+                        displayName: c.name || String(c.index),
+                        value: String(table.rows[m.ri][c.index] ?? ""),
+                    })),
+                    identities: m.ids.length ? [m.ids[0]] : [],
+                });
+            };
+            const selectGroup = (m: { gkey: string; ids: powerbi.extensibility.ISelectionId[] }, multi: boolean) => {
+                // Honour the report's Edit interactions setting.
+                if (this.host.hostCapabilities?.allowInteractions === false) return;
+                const gkey = m.gkey;
+                const isOnly = !multi && this.selectedKeys.size === 1 && this.selectedKeys.has(gkey);
+                const after = () => {
+                    if (multi) { this.selectedKeys.has(gkey) ? this.selectedKeys.delete(gkey) : this.selectedKeys.add(gkey); }
+                    else { this.selectedKeys.clear(); if (!isOnly) this.selectedKeys.add(gkey); }
+                    this.applySel();
+                };
+                try {
+                    if (!m.ids.length) { after(); return; }
+                    if (isOnly) this.selectionManager.clear().then(after);
+                    else this.selectionManager.select(m.ids, multi).then(after);
+                } catch { after(); }
+            };
+            tbody.addEventListener("mousemove", (ev) => { const m = metaOf(ev); if (m) showTip(ev, false, m); });
+            tbody.addEventListener("pointerdown", (ev: PointerEvent) => { const m = metaOf(ev); if (m && ev.pointerType === "touch") showTip(ev, true, m); });
+            tbody.addEventListener("mouseleave", () => this.tooltipService?.hide({ immediately: true, isTouchEvent: false }));
+            tbody.addEventListener("keydown", (ev: KeyboardEvent) => {
+                if (ev.key !== "Enter" && ev.key !== " ") return;
+                const m = metaOf(ev); if (!m) return;
+                ev.preventDefault();
+                selectGroup(m, ev.ctrlKey || ev.metaKey);
+            });
+            tbody.addEventListener("click", (ev) => {
+                const m = metaOf(ev); if (!m) return;
+                ev.stopPropagation();
+                selectGroup(m, ev.ctrlKey || ev.metaKey);
+            });
+            tbody.addEventListener("contextmenu", (ev) => {
+                const m = metaOf(ev); if (!m) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                this.selectionManager.showContextMenu(m.ids[0] ?? ({} as unknown as powerbi.visuals.ISelectionId), { x: ev.clientX, y: ev.clientY });
             });
             tbl.appendChild(tbody);
             this.root.appendChild(tbl);
