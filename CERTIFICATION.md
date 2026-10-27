@@ -78,6 +78,21 @@ hardcoded in `style/visual.less`.
 All 25 declared properties are now returned from `getFormattingModel`, and a unit test
 asserts that, so it cannot regress silently.
 
+## Branch `perf/faster-interaction` - 1.4.0.0, not submitted
+
+Render speed only, no change to what the table shows or how it behaves:
+- Resize-only updates (`VisualUpdateType` Resize / ResizeEnd, no Data, Style or ViewMode bit) keep the rendered table and just apply the new viewport size. `renderingStarted` and `renderingFinished` still fire on every update (export and the rendering-events check depend on it).
+- Number formatting reuses one `Intl.NumberFormat` per decimal count instead of `toLocaleString` per cell. Output is identical (logic tests pass unchanged).
+- Row tooltips, selection, Ctrl/Cmd multi-select, Enter/Space keyboard activation and the context menu are handled by one set of listeners on `tbody` instead of six per row. Rows stay focusable (`tabIndex = 0`), the Edit interactions guard is unchanged, and touch tooltips still use `pointerdown`.
+
+Policy impact checked against the audit table above: resize (1180.2.2) still scrolls - the root keeps `overflow: auto` and a resize never empties the visual; tooltips (1180.2.2.2), filter out (1180.2.2.3), keyboard navigation, Edit interactions and high contrast are all unchanged in behaviour. No new privileges, network access or capabilities.
+
+**Not yet built or verified as a release.** `main` and `certification` are still at 1.3.0.0 and their sample .pbix and `dist/` package are unchanged. Before merging or submitting 1.4.0.0:
+1. `npm install`, `npm run lint`, `npm test` (the jsdom visual tests were not run when this branch was written).
+2. `npx pbiviz package --certification-audit` - expect no external requests.
+3. Re-save `store/grouped-indicator-table-sample.pbix` from Power BI Desktop embedding the new `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.4.0.0.pbiviz`, so the two upload slots carry the same version (1180.2.3).
+4. Push `main` and `certification` together at 1.4.0.0 and upload both slots together.
+
 ## Current state (28 August 2026)
 
 **Submitted 27 August 2026 at 1.2.0.0. Awaiting review outcome.**
