@@ -3,6 +3,7 @@
 **Publisher:** Obliwise
 **Submitted:** 24 August 2026 (v1.0.0.0) - no review outcome recorded
 **Resubmitted:** 27 August 2026 (v1.2.0.0) - awaiting review outcome
+**Resubmitted:** 27 October 2026 (v1.4.0.0) - awaiting review outcome
 
 ## Known risks, from the Accent KPI Card review (25 August 2026)
 
@@ -107,13 +108,13 @@ selection ids, delegated tooltip hide). No new privileges, network access or cap
 
 ## Current state (27 October 2026)
 
-**1.4.0.0 is built, verified and pushed to `main` and `certification` together; not yet
-submitted.** It is the performance release described above - nothing visible changed.
+**1.4.0.0 is built, verified and pushed to `main` and `certification` together; submitted
+27 October 2026, awaiting review outcome.** It is the performance release described above - nothing visible changed.
 **1.3.0.0 is live on AppSource** (verified 27 October 2026: the CDN serves
 `pbivisuals.powerbi.com/<guid>.1.3.0.0.<hash>.pbiviz.json` with a 1.3.0.0 manifest), so it was
 submitted and published after 28 August 2026; 1.4.0.0 supersedes it.
 
-**To upload, together, on the Technical configuration page:**
+**What went up, together, on the Technical configuration page (27 October 2026):**
 `dist/groupedIndicatorTable3BCEC6EDD44443449B5E9264E10CD122.1.4.0.0.pbiviz` and
 `store/grouped-indicator-table-sample.pbix`, with the reviewer notes from `store/listing.md`
 pasted into Notes for certification on Review and publish.
