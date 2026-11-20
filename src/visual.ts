@@ -22,7 +22,7 @@ interface Style {
     pillColor: string; pillBg: string; good: string; bad: string; neutral: string;
     fontFamily: string; fontSize: number; headerSize: number;
     headerFontFamily: string; headerBold: boolean; headerUppercase: boolean;
-    groupBold: boolean; mergedBold: boolean; deltaBold: boolean;
+    groupBold: boolean; mergedBold: boolean; deltaBold: boolean; mergeCells: boolean;
     textColor: string; valueColor: string; groupColor: string;
     deltaColumnCount: number; hideEmptyColumns: boolean; sortByGroup: boolean; wrapText: boolean; showPills: boolean;
     heatmap: boolean; heatmapCenter: number; heatmapLow: string; heatmapMid: string; heatmapHigh: string;
@@ -33,7 +33,7 @@ const DEFAULTS: Style = {
     fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 12, headerSize: 10,
     // "" = the body font. The bold and capitals switches default to the look the table has always had.
     headerFontFamily: "", headerBold: true, headerUppercase: true,
-    groupBold: true, mergedBold: true, deltaBold: true,
+    groupBold: true, mergedBold: true, deltaBold: true, mergeCells: true,
     textColor: "#252423", valueColor: "#023864", groupColor: "#023864",
     deltaColumnCount: 1, hideEmptyColumns: false, sortByGroup: false, wrapText: false, showPills: true,
     heatmap: false, heatmapCenter: 1, heatmapLow: "#2C7FB8", heatmapMid: "#FFFFFF", heatmapHigh: "#E8843C",
@@ -248,6 +248,7 @@ export class Visual implements IVisual {
                 groupBold: (o?.["groupBold"] as boolean) ?? DEFAULTS.groupBold,
                 mergedBold: (o?.["mergedBold"] as boolean) ?? DEFAULTS.mergedBold,
                 deltaBold: (o?.["deltaBold"] as boolean) ?? DEFAULTS.deltaBold,
+                mergeCells: (o?.["mergeCells"] as boolean) ?? DEFAULTS.mergeCells,
                 textColor: fill(o, "textColor", DEFAULTS.textColor),
                 valueColor: fill(o, "valueColor", DEFAULTS.valueColor),
                 groupColor: fill(o, "groupColor", DEFAULTS.groupColor),
@@ -329,7 +330,9 @@ export class Visual implements IVisual {
             const mergeCol = valCols.find((c) => textValSet.has(c.index));
             // MERGE MODE: rows are detail rows, but the shared value columns (e.g. name, source,
             // current, comparison, delta) collapse into one centred cell spanning the rows that share them.
-            const mergeMode = !!mergeCol && (!!groupCol || dimCols.length > 0);
+            // Off (Format pane > Layout > Merge shared cells), every row stands alone: rows that merely happen to share a
+            // text value (two divisions both on "0 d") are not run together.
+            const mergeMode = s.mergeCells && !!mergeCol && (!!groupCol || dimCols.length > 0);
             const mergedIdx = new Set<number>(mergeMode ? valCols.map((c) => c.index) : []);
 
             // Pill a column only when its values look like short codes (e.g. C57) - the group
@@ -602,7 +605,8 @@ export class Visual implements IVisual {
                             this.numSlice("tDeltaCols", "Delta columns (from right)", "deltaColumnCount", s.deltaColumnCount, 0, 20),
                             this.toggleSlice("tHideEmpty", "Hide empty columns", "hideEmptyColumns", s.hideEmptyColumns),
                             this.toggleSlice("tSortByGroup", "Sort by group name", "sortByGroup", s.sortByGroup),
-                            this.toggleSlice("tWrapText", "Wrap text", "wrapText", s.wrapText)
+                            this.toggleSlice("tWrapText", "Wrap text", "wrapText", s.wrapText),
+                            this.toggleSlice("tMergeCells", "Merge shared cells", "mergeCells", s.mergeCells)
                         ]
                     }]
                 },

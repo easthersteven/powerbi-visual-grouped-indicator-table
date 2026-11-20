@@ -33,6 +33,7 @@ A Power BI custom visual: a table that groups rows, merges the cells the group s
 | Text | Header font family | The header's own typeface (follows the body font until set). |
 | Text | Bold header, Header in capitals | Header weight and capitals; on by default. |
 | Text | Bold group column, Bold merged cells, Bold change columns | Weight of the group column, the merged value cells and the change columns; on by default. |
+| Layout | Merge shared cells | On by default: rows sharing a text value merge into one spanned cell. Off: every row stands alone. |
 | Colours | Header background / Header text | Header row styling. |
 | Colours | Alternating row | Background of every second group. |
 | Colours | Accent | Selection accent bar colour. |

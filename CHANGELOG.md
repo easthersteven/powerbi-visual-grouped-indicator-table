@@ -9,6 +9,9 @@ exactly as 1.4.0.0 does.
   bold and capitals, and the bold of the group column, the merged value cells and the change
   columns, were fixed in the stylesheet, so the table could not match a report whose own tables
   have plain headers and regular-weight cells. Each now has its own switch, on by default.
+- **Merge shared cells can be switched off (Format pane > Layout).** On by default, as before. Off, every row
+  stands alone, so rows that merely happen to share a text value (two segments both showing "0 d") are not
+  run together into one spanned cell.
 - **Header font family (Format pane > Text > Font).** The header can take its own typeface (for
   example a semibold face for a regular-weight header); until it is set it follows the body font.
 

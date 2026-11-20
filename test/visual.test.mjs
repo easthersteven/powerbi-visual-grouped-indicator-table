@@ -199,6 +199,21 @@ test("bold and capitals can each be turned off, and the header can take its own 
     for (const uid of ["tHeaderBold", "tHeaderUpper", "tGroupBold", "tMergedBold", "tDeltaBold", "tableHeaderFontFamilySlice"]) assert.ok(slices.includes(uid), uid);
 });
 
+test("Merge shared cells off keeps every row on its own", () => {
+    const { visual, element } = makeVisual();
+    const columns = [
+        col("Segment", "T.Segment", { groupBy: true }),
+        col("Leave", "_Measures.Leave", { values: true }, { isMeasure: true }),
+        col("Total", "_Measures.Total", { values: true }, { isMeasure: true })
+    ];
+    const rows = [["North", "0 d", 5], ["South", "0 d", 7]];
+    update(visual, columns, rows);
+    assert.equal(element.querySelectorAll("td[rowspan='2']").length > 0, true, "merged by default");
+    update(visual, columns, rows, { tableStyle: { mergeCells: false } });
+    assert.equal(element.querySelectorAll("td[rowspan]").length, 0);
+    assert.equal(element.querySelectorAll("tbody tr").length, 2);
+});
+
 test("merge mode spans shared value cells across the group's rows", () => {
     const { visual, element } = makeVisual();
     const columns = [

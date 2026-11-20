@@ -252,6 +252,11 @@
                     "type": {
                         "bool": true
                     }
+                },
+                "mergeCells": {
+                    "type": {
+                        "bool": true
+                    }
                 }
             }
         }
