@@ -12,6 +12,8 @@ exactly as 1.4.0.0 does.
 - **Merge shared cells can be switched off (Format pane > Layout).** On by default, as before. Off, every row
   stands alone, so rows that merely happen to share a text value (two segments both showing "0 d") are not
   run together into one spanned cell.
+- **Selected row and hover row colours (Format pane > Colours > Table).** Were fixed in the stylesheet (a pale
+  green); the defaults are unchanged.
 - **Header font family (Format pane > Text > Font).** The header can take its own typeface (for
   example a semibold face for a regular-weight header); until it is set it follows the body font.
 

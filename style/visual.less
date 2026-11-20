@@ -92,10 +92,10 @@
         transition: background 0.1s, opacity 0.1s;
     }
     tbody tr:hover td {
-        background: #e9f3f1 !important;
+        background: var(--gi-hover-bg, #e9f3f1) !important;
     }
     tbody tr.sel td {
-        background: #dcefe9 !important;
+        background: var(--gi-sel-bg, #dcefe9) !important;
     }
     // High contrast: the tinted hover/selection backgrounds above would put the host's
     // foreground text on a near-white tint. Selection stays visible through the inset

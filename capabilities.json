@@ -257,6 +257,24 @@
                     "type": {
                         "bool": true
                     }
+                },
+                "selectedBg": {
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "hoverBg": {
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
                 }
             }
         }

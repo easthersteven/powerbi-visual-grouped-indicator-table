@@ -37,6 +37,7 @@ A Power BI custom visual: a table that groups rows, merges the cells the group s
 | Colours | Header background / Header text | Header row styling. |
 | Colours | Alternating row | Background of every second group. |
 | Colours | Accent | Selection accent bar colour. |
+| Colours | Selected row / Hover row | Background of the selected row and of the row under the pointer. |
 | Colours | Up / good, Down / bad, Neutral | Delta colours. |
 
 Additional properties available to report themes: pill colours, delta column count, hide empty columns, sort by group, and the heatmap (on/off, centre, low/mid/high colours).

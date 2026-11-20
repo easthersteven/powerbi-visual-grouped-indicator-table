@@ -18,7 +18,7 @@ import DataViewTable = powerbi.DataViewTable;
 import PrimitiveValue = powerbi.PrimitiveValue;
 
 interface Style {
-    headerBg: string; headerColor: string; rowAltBg: string; accent: string;
+    headerBg: string; headerColor: string; rowAltBg: string; accent: string; selectedBg: string; hoverBg: string;
     pillColor: string; pillBg: string; good: string; bad: string; neutral: string;
     fontFamily: string; fontSize: number; headerSize: number;
     headerFontFamily: string; headerBold: boolean; headerUppercase: boolean;
@@ -28,7 +28,7 @@ interface Style {
     heatmap: boolean; heatmapCenter: number; heatmapLow: string; heatmapMid: string; heatmapHigh: string;
 }
 const DEFAULTS: Style = {
-    headerBg: "#023864", headerColor: "#FFFFFF", rowAltBg: "#f6faf9", accent: "#1F908C",
+    headerBg: "#023864", headerColor: "#FFFFFF", rowAltBg: "#f6faf9", accent: "#1F908C", selectedBg: "#dcefe9", hoverBg: "#e9f3f1",
     pillColor: "#016C8D", pillBg: "#e7f1f4", good: "#0F7A2C", bad: "#9E2F24", neutral: "#605E5C",
     fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 12, headerSize: 10,
     // "" = the body font. The bold and capitals switches default to the look the table has always had.
@@ -237,6 +237,7 @@ export class Visual implements IVisual {
             const s: Style = {
                 headerBg: fill(o, "headerBg", DEFAULTS.headerBg), headerColor: fill(o, "headerColor", DEFAULTS.headerColor),
                 rowAltBg: fill(o, "rowAltBg", DEFAULTS.rowAltBg), accent: fill(o, "accent", DEFAULTS.accent),
+                selectedBg: fill(o, "selectedBg", DEFAULTS.selectedBg), hoverBg: fill(o, "hoverBg", DEFAULTS.hoverBg),
                 pillColor: fill(o, "pillColor", DEFAULTS.pillColor), pillBg: fill(o, "pillBg", DEFAULTS.pillBg),
                 good: fill(o, "good", DEFAULTS.good), bad: fill(o, "bad", DEFAULTS.bad), neutral: fill(o, "neutral", DEFAULTS.neutral),
                 fontFamily: text(o, "fontFamily", DEFAULTS.fontFamily),
@@ -288,6 +289,9 @@ export class Visual implements IVisual {
             }
 
             this.accent = s.accent;
+            // Selected and hover row backgrounds (Format pane > Colours > Table); high contrast keeps its own rules in the stylesheet.
+            this.root.style.setProperty("--gi-sel-bg", s.selectedBg);
+            this.root.style.setProperty("--gi-hover-bg", s.hoverBg);
             this.lastS = s;
             // Wrap mode: headers and cells break onto further lines instead of scrolling sideways.
             this.root.classList.toggle("wrap", s.wrapText);
@@ -576,7 +580,9 @@ export class Visual implements IVisual {
                                 this.colorSlice("tHeaderBg", "Header background", "headerBg", s.headerBg),
                                 this.colorSlice("tHeaderText", "Header text", "headerColor", s.headerColor),
                                 this.colorSlice("tRowAlt", "Alternating row", "rowAltBg", s.rowAltBg),
-                                this.colorSlice("tAccent", "Accent", "accent", s.accent)
+                                this.colorSlice("tAccent", "Accent", "accent", s.accent),
+                                this.colorSlice("tSelectedBg", "Selected row", "selectedBg", s.selectedBg),
+                                this.colorSlice("tHoverBg", "Hover row", "hoverBg", s.hoverBg)
                             ]
                         },
                         {

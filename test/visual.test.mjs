@@ -199,6 +199,15 @@ test("bold and capitals can each be turned off, and the header can take its own 
     for (const uid of ["tHeaderBold", "tHeaderUpper", "tGroupBold", "tMergedBold", "tDeltaBold", "tableHeaderFontFamilySlice"]) assert.ok(slices.includes(uid), uid);
 });
 
+test("selected and hover row colours come from the Format pane", () => {
+    const { visual, element } = makeVisual();
+    update(visual, sampleColumns(), sampleRows());
+    assert.equal(element.style.getPropertyValue("--gi-sel-bg"), "#dcefe9");
+    update(visual, sampleColumns(), sampleRows(), { tableStyle: { selectedBg: { solid: { color: "#DCE3EC" } }, hoverBg: { solid: { color: "#EEF1F5" } } } });
+    assert.equal(element.style.getPropertyValue("--gi-sel-bg").toLowerCase(), "#dce3ec");
+    assert.equal(element.style.getPropertyValue("--gi-hover-bg").toLowerCase(), "#eef1f5");
+});
+
 test("Merge shared cells off keeps every row on its own", () => {
     const { visual, element } = makeVisual();
     const columns = [
