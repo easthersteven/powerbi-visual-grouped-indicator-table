@@ -21,6 +21,8 @@ interface Style {
     headerBg: string; headerColor: string; rowAltBg: string; accent: string;
     pillColor: string; pillBg: string; good: string; bad: string; neutral: string;
     fontFamily: string; fontSize: number; headerSize: number;
+    headerFontFamily: string; headerBold: boolean; headerUppercase: boolean;
+    groupBold: boolean; mergedBold: boolean; deltaBold: boolean;
     textColor: string; valueColor: string; groupColor: string;
     deltaColumnCount: number; hideEmptyColumns: boolean; sortByGroup: boolean; wrapText: boolean; showPills: boolean;
     heatmap: boolean; heatmapCenter: number; heatmapLow: string; heatmapMid: string; heatmapHigh: string;
@@ -29,6 +31,9 @@ const DEFAULTS: Style = {
     headerBg: "#023864", headerColor: "#FFFFFF", rowAltBg: "#f6faf9", accent: "#1F908C",
     pillColor: "#016C8D", pillBg: "#e7f1f4", good: "#0F7A2C", bad: "#9E2F24", neutral: "#605E5C",
     fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 12, headerSize: 10,
+    // "" = the body font. The bold and capitals switches default to the look the table has always had.
+    headerFontFamily: "", headerBold: true, headerUppercase: true,
+    groupBold: true, mergedBold: true, deltaBold: true,
     textColor: "#252423", valueColor: "#023864", groupColor: "#023864",
     deltaColumnCount: 1, hideEmptyColumns: false, sortByGroup: false, wrapText: false, showPills: true,
     heatmap: false, heatmapCenter: 1, heatmapLow: "#2C7FB8", heatmapMid: "#FFFFFF", heatmapHigh: "#E8843C",
@@ -237,6 +242,12 @@ export class Visual implements IVisual {
                 fontFamily: text(o, "fontFamily", DEFAULTS.fontFamily),
                 fontSize: num(o, "fontSize", DEFAULTS.fontSize, 4, 200),
                 headerSize: num(o, "headerSize", DEFAULTS.headerSize, 4, 200),
+                headerFontFamily: text(o, "headerFontFamily", DEFAULTS.headerFontFamily),
+                headerBold: (o?.["headerBold"] as boolean) ?? DEFAULTS.headerBold,
+                headerUppercase: (o?.["headerUppercase"] as boolean) ?? DEFAULTS.headerUppercase,
+                groupBold: (o?.["groupBold"] as boolean) ?? DEFAULTS.groupBold,
+                mergedBold: (o?.["mergedBold"] as boolean) ?? DEFAULTS.mergedBold,
+                deltaBold: (o?.["deltaBold"] as boolean) ?? DEFAULTS.deltaBold,
                 textColor: fill(o, "textColor", DEFAULTS.textColor),
                 valueColor: fill(o, "valueColor", DEFAULTS.valueColor),
                 groupColor: fill(o, "groupColor", DEFAULTS.groupColor),
@@ -369,6 +380,11 @@ export class Visual implements IVisual {
             for (const c of display) {
                 const th = el("th"); th.textContent = c.name; th.style.background = s.headerBg; th.style.color = s.headerColor;
                 th.style.fontSize = s.headerSize + "px";
+                // Header font, weight and capitals are switchable (Format pane > Text), so the header can match a report's own tables.
+                if (s.headerFontFamily) th.style.fontFamily = s.headerFontFamily;
+                th.style.fontWeight = s.headerBold ? "700" : "400";
+                th.style.textTransform = s.headerUppercase ? "uppercase" : "none";
+                th.style.letterSpacing = s.headerUppercase ? "0.2px" : "normal";
                 if (deltaSet.has(c.index) || (c.isVal && !textValSet.has(c.index))) th.style.textAlign = "right";
                 htr.appendChild(th);
             }
@@ -395,13 +411,16 @@ export class Visual implements IVisual {
                         const isMerged = mergedIdx.has(c.index);
                         if (isMerged && j !== 0) continue;                          // spanned from the first row
                         const td = el("td");
-                        if (isMerged) { (td as HTMLTableCellElement).rowSpan = rowIdxs.length; td.classList.add("merged"); }
+                        if (isMerged) {
+                            (td as HTMLTableCellElement).rowSpan = rowIdxs.length; td.classList.add("merged");
+                            if (!s.mergedBold) td.style.fontWeight = "400";
+                        }
                         const text = String(table.rows[ri][c.index] ?? "");
                         if (deltaSet.has(c.index)) {
                             td.style.textAlign = "right"; td.classList.add("num");
                             const cls = deltaClass(text, direction);
                             td.style.color = cls === "good" ? s.good : cls === "bad" ? s.bad : s.neutral;
-                            td.style.fontWeight = "700"; td.textContent = text;
+                            td.style.fontWeight = s.deltaBold ? "700" : "400"; td.textContent = text;
                         } else if (c.isVal && !textValSet.has(c.index)) {
                             td.style.textAlign = "right"; td.classList.add("num");
                             const raw = table.rows[ri][c.index];
@@ -415,7 +434,10 @@ export class Visual implements IVisual {
                             const pill = el("span", "gi-pill"); pill.textContent = text; pill.style.color = s.pillColor; pill.style.background = s.pillBg; td.appendChild(pill);
                         } else if (c.isVal) {                                        // merged text value (e.g. name / source)
                             td.style.color = s.valueColor; td.textContent = text;
-                        } else if (c.isGroup) { td.classList.add("grp-key"); td.style.color = s.groupColor; td.textContent = text; }
+                        } else if (c.isGroup) {
+                            td.classList.add("grp-key"); td.style.color = s.groupColor; td.textContent = text;
+                            if (!s.groupBold) td.style.fontWeight = "400";
+                        }
                         else td.textContent = text;
                         tr.appendChild(td);
                     }
@@ -512,7 +534,24 @@ export class Visual implements IVisual {
                                     }
                                 },
                                 this.numSlice("tableFontSizeSlice", "Body font size", "fontSize", s.fontSize, 4, 200, "px"),
-                                this.numSlice("tableHeaderSizeSlice", "Header font size", "headerSize", s.headerSize, 4, 200, "px")
+                                this.numSlice("tableHeaderSizeSlice", "Header font size", "headerSize", s.headerSize, 4, 200, "px"),
+                                {
+                                    uid: "tableHeaderFontFamilySlice", displayName: "Header font family",
+                                    control: {
+                                        type: powerbi.visuals.FormattingComponent.FontPicker,
+                                        properties: { descriptor: Visual.desc("headerFontFamily"), value: s.headerFontFamily || s.fontFamily }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            uid: "tableWeightGroup", displayName: "Bold and capitals",
+                            slices: [
+                                this.toggleSlice("tHeaderBold", "Bold header", "headerBold", s.headerBold),
+                                this.toggleSlice("tHeaderUpper", "Header in capitals", "headerUppercase", s.headerUppercase),
+                                this.toggleSlice("tGroupBold", "Bold group column", "groupBold", s.groupBold),
+                                this.toggleSlice("tMergedBold", "Bold merged cells", "mergedBold", s.mergedBold),
+                                this.toggleSlice("tDeltaBold", "Bold change columns", "deltaBold", s.deltaBold)
                             ]
                         },
                         {

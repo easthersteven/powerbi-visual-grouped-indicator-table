@@ -220,6 +220,38 @@
                             }
                         }
                     }
+                },
+                "headerFontFamily": {
+                    "type": {
+                        "formatting": {
+                            "fontFamily": true
+                        }
+                    }
+                },
+                "headerBold": {
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "headerUppercase": {
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "groupBold": {
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "mergedBold": {
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "deltaBold": {
+                    "type": {
+                        "bool": true
+                    }
                 }
             }
         }

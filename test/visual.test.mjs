@@ -159,6 +159,46 @@ test("Show code pills off renders even code-like values as plain cells", () => {
     assert.ok([...element.querySelectorAll("tbody td")].some((td) => td.textContent === "C57"), "the value still renders, unpilled");
 });
 
+test("bold and capitals default to the original look", () => {
+    const { visual, element } = makeVisual();
+    const columns = [
+        col("Code", "T.Code", { groupBy: true }),
+        col("Item", "T.Item", { dimensions: true }),
+        col("Indicator", "_Measures.Indicator", { values: true }, { isMeasure: true }),
+        col("Change", "_Measures.Change", { values: true }, { isMeasure: true })
+    ];
+    update(visual, columns, [["Group one", "First", "Fatigue", "▲ 2"], ["Group one", "Second", "Fatigue", "▲ 2"]]);
+    const th = element.querySelector("th");
+    assert.equal(th.style.fontWeight, "700");
+    assert.equal(th.style.textTransform, "uppercase");
+    assert.equal(element.querySelector("td.grp-key").style.fontWeight, "");
+    assert.equal([...element.querySelectorAll("td.merged")].find((td) => td.textContent === "Fatigue").style.fontWeight, "");
+    assert.equal([...element.querySelectorAll("td")].find((td) => td.textContent === "▲ 2").style.fontWeight, "700");
+});
+
+test("bold and capitals can each be turned off, and the header can take its own font", () => {
+    const { visual, element } = makeVisual();
+    const columns = [
+        col("Code", "T.Code", { groupBy: true }),
+        col("Item", "T.Item", { dimensions: true }),
+        col("Indicator", "_Measures.Indicator", { values: true }, { isMeasure: true }),
+        col("Change", "_Measures.Change", { values: true }, { isMeasure: true })
+    ];
+    const objects = { tableStyle: { headerBold: false, headerUppercase: false, groupBold: false, mergedBold: false, deltaBold: false,
+                                    headerFontFamily: "'Segoe UI Semibold', sans-serif" } };
+    update(visual, columns, [["Group one", "First", "Fatigue", "▲ 2"], ["Group one", "Second", "Fatigue", "▲ 2"]], objects);
+    const th = element.querySelector("th");
+    assert.equal(th.style.fontWeight, "400");
+    assert.equal(th.style.textTransform, "none");
+    assert.match(th.style.fontFamily, /Segoe UI Semibold/);
+    assert.equal(element.querySelector("td.grp-key").style.fontWeight, "400");
+    assert.equal([...element.querySelectorAll("td.merged")].find((td) => td.textContent === "Fatigue").style.fontWeight, "400");
+    assert.equal([...element.querySelectorAll("td")].find((td) => td.textContent === "▲ 2").style.fontWeight, "400");
+    const model = visual.getFormattingModel();
+    const slices = model.cards.flatMap((c) => c.groups.flatMap((g) => g.slices.map((x) => x.uid)));
+    for (const uid of ["tHeaderBold", "tHeaderUpper", "tGroupBold", "tMergedBold", "tDeltaBold", "tableHeaderFontFamilySlice"]) assert.ok(slices.includes(uid), uid);
+});
+
 test("merge mode spans shared value cells across the group's rows", () => {
     const { visual, element } = makeVisual();
     const columns = [

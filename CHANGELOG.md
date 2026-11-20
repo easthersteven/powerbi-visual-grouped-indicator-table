@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.5.0.0 (2026-11-20)
+
+Built on main; not yet submitted. Formatting only: with no new settings changed the table looks
+exactly as 1.4.0.0 does.
+
+- **Bold and capitals can be switched off (Format pane > Text > Bold and capitals).** The header's
+  bold and capitals, and the bold of the group column, the merged value cells and the change
+  columns, were fixed in the stylesheet, so the table could not match a report whose own tables
+  have plain headers and regular-weight cells. Each now has its own switch, on by default.
+- **Header font family (Format pane > Text > Font).** The header can take its own typeface (for
+  example a semibold face for a regular-weight header); until it is set it follows the body font.
+
 ## 1.4.0.0 (2026-10-27)
 
 Performance release, built on main; not yet submitted. What the table shows and how it
